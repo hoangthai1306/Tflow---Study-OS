@@ -118,6 +118,10 @@
         { id: 'reward_4', title: 'Legendary off-screen hour', msg: 'You earned a full hour away from the desk.', rarity: 'legendary' }
       ];
 
+      const CURRENT_SCHEMA_VERSION = 7;
+      const FREEZE_DAY_MINUTES = 15;
+      const FREEZE_SHARD_STREAK_LENGTH = 3;
+
       function toDateKey(dateObj) {
         const y = dateObj.getFullYear();
         const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -174,7 +178,7 @@
           thresholds: [35, 70, 100]
         },
         xp: 0,
-        schemaVersion: 6,
+        schemaVersion: CURRENT_SCHEMA_VERSION,
         lootTickets: 0,
         rewardProgressPomodoros: 0,
         rewardConfig: { pomodorosPerTicket: 4, rarityWeights: { common: 60, uncommon: 25, rare: 10, legendary: 5 } },
@@ -182,6 +186,7 @@
         focusCombo: { count: 0, lastRewardedSessionId: '' },
         streakFreezeShards: 0,
         streakFreezeDates: [],
+        freezeShardLedger: { ruleVersion: 2, awardedMilestones: [], baselineInitialized: false },
         zeigarnikHook: '',
         demoMode: false,
         protocol: { focus: 50, short: 10, long: 20, label: 'Deep Work 50/10' }
@@ -227,9 +232,98 @@
         return Object.fromEntries(Object.entries(value).filter(([key]) => !['__proto__', 'prototype', 'constructor'].includes(key)));
       }
 
+      function isStudySession(session) {
+        if (!session || typeof session !== 'object') return false;
+        const label = String(session.protocolLabel || session.mode || '').trim().toLowerCase();
+        return !/(^|\s)(short|long)\s+break\b/.test(label) && label !== 'short' && label !== 'long';
+      }
+
+      function getQualifyingStudyDates(stateArg = state, options = {}) {
+        const todayKey = isValidDateKey(options.todayKey) ? options.todayKey : TODAY_KEY;
+        const minimumMinutes = Math.max(1, Math.round(Number(options.minimumMinutes) || FREEZE_DAY_MINUTES));
+        const sessions = Array.isArray(stateArg?.sessions) ? stateArg.sessions : [];
+        return [...new Set(sessions
+          .filter(session => isStudySession(session)
+            && isValidDateKey(session.date)
+            && session.date <= todayKey
+            && getSessionMinutes(session) >= minimumMinutes)
+          .map(session => session.date))].sort();
+      }
+
+      function getConsecutiveDateRuns(dateKeys = []) {
+        const dates = [...new Set(dateKeys.filter(isValidDateKey))].sort();
+        if (!dates.length) return [];
+        const runs = [[dates[0]]];
+        dates.slice(1).forEach(dateKey => {
+          const currentRun = runs[runs.length - 1];
+          const previousDate = currentRun[currentRun.length - 1];
+          if (calendarDaysBetween(previousDate, dateKey) === 1) currentRun.push(dateKey);
+          else runs.push([dateKey]);
+        });
+        return runs;
+      }
+
+      function getFreezeShardMilestones(dateKeys = [], streakLength = FREEZE_SHARD_STREAK_LENGTH) {
+        const length = Math.max(1, Math.floor(Number(streakLength) || FREEZE_SHARD_STREAK_LENGTH));
+        return getConsecutiveDateRuns(dateKeys).flatMap(run => {
+          const milestones = [];
+          for (let index = length - 1; index < run.length; index += length) milestones.push(run[index]);
+          return milestones;
+        });
+      }
+
+      function getCurrentStudyStreak(stateArg = state, anchorDate = TODAY_KEY) {
+        const anchor = isValidDateKey(anchorDate) ? anchorDate : TODAY_KEY;
+        const dates = new Set(getQualifyingStudyDates(stateArg, { todayKey: anchor }));
+        let checkDate = anchor;
+        if (!dates.has(checkDate)) checkDate = addDays(anchor, -1);
+        let streak = 0;
+        while (dates.has(checkDate)) {
+          streak++;
+          checkDate = addDays(checkDate, -1);
+        }
+        return streak;
+      }
+
+      function getEffectiveStreakDates(stateArg = state, anchorDate = TODAY_KEY) {
+        const anchor = isValidDateKey(anchorDate) ? anchorDate : TODAY_KEY;
+        const dates = new Set(getQualifyingStudyDates(stateArg, { todayKey: anchor }));
+        const frozenDates = Array.isArray(stateArg?.streakFreezeDates) ? stateArg.streakFreezeDates : [];
+        frozenDates.filter(dateKey => isValidDateKey(dateKey) && dateKey <= anchor).forEach(dateKey => dates.add(dateKey));
+        return dates;
+      }
+
+      function getUnawardedFreezeShardMilestones(stateArg = state) {
+        const milestones = getFreezeShardMilestones(getQualifyingStudyDates(stateArg));
+        const awarded = new Set(stateArg?.freezeShardLedger?.awardedMilestones || []);
+        return milestones.filter(milestone => !awarded.has(milestone));
+      }
+
+      function awardFreezeShardsForNewMilestones(stateArg = state) {
+        if (!stateArg.freezeShardLedger || typeof stateArg.freezeShardLedger !== 'object') {
+          stateArg.freezeShardLedger = { ruleVersion: 2, awardedMilestones: [], baselineInitialized: false };
+        }
+        const awarded = new Set(Array.isArray(stateArg.freezeShardLedger.awardedMilestones)
+          ? stateArg.freezeShardLedger.awardedMilestones.filter(isValidDateKey)
+          : []);
+        const newMilestones = getUnawardedFreezeShardMilestones(stateArg).filter(milestone => !awarded.has(milestone));
+        if (!newMilestones.length) {
+          stateArg.freezeShardLedger.awardedMilestones = [...awarded].sort();
+          stateArg.freezeShardLedger.ruleVersion = 2;
+          return [];
+        }
+        newMilestones.forEach(milestone => awarded.add(milestone));
+        stateArg.streakFreezeShards = Math.floor(Number(stateArg.streakFreezeShards) || 0) + newMilestones.length;
+        stateArg.freezeShardLedger.awardedMilestones = [...awarded].sort();
+        stateArg.freezeShardLedger.ruleVersion = 2;
+        stateArg.freezeShardLedger.baselineInitialized = true;
+        return newMilestones;
+      }
+
       // State is initialized with empty user collections; no demo-content generators are kept.
       function normalizeAppState(input = {}, baseState = DEFAULT_STATE) {
         const source = safeObject(input);
+        const sourceSchemaVersion = Math.floor(Number(source.schemaVersion) || 0);
         const next = Object.assign({}, baseState, source);
         next.onboarding = Object.assign({}, baseState.onboarding, safeObject(source.onboarding));
         next.onboarding.availability = Array.from({ length: 7 }, (_, index) => boundedNumber(next.onboarding.availability?.[index], 0, 0, 600));
@@ -278,6 +372,14 @@
         next.focusCombo.lastRewardedSessionId = safeId(next.focusCombo.lastRewardedSessionId, '');
         next.streakFreezeShards = Math.floor(boundedNumber(next.streakFreezeShards, 0, 0, 1000000));
         next.streakFreezeDates = Array.isArray(next.streakFreezeDates) ? [...new Set(next.streakFreezeDates.filter(isValidDateKey))] : [];
+        const sourceLedger = safeObject(source.freezeShardLedger);
+        next.freezeShardLedger = {
+          ruleVersion: 2,
+          awardedMilestones: Array.isArray(sourceLedger.awardedMilestones)
+            ? [...new Set(sourceLedger.awardedMilestones.filter(dateKey => isValidDateKey(dateKey) && dateKey <= TODAY_KEY))].sort()
+            : [],
+          baselineInitialized: Boolean(sourceLedger.baselineInitialized)
+        };
         next.resourceAttachmentLimit = 3 * 1024 * 1024;
         next.heatmapConfig.layer = ['minutes', 'completion', 'sessions', 'focus'].includes(next.heatmapConfig.layer) ? next.heatmapConfig.layer : 'minutes';
         next.heatmapConfig.palette = Object.prototype.hasOwnProperty.call(HEATMAP_PALETTES, next.heatmapConfig.palette) ? next.heatmapConfig.palette : 'cyan';
@@ -298,6 +400,14 @@
           session.timestamp = Number.isFinite(Number(session.timestamp)) ? Number(session.timestamp) : 0;
           return true;
         });
+        if (sourceSchemaVersion < CURRENT_SCHEMA_VERSION || !sourceLedger.baselineInitialized) {
+          const historicalMilestones = getFreezeShardMilestones(getQualifyingStudyDates(next));
+          next.freezeShardLedger.awardedMilestones = [...new Set([
+            ...next.freezeShardLedger.awardedMilestones,
+            ...historicalMilestones
+          ])].sort();
+          next.freezeShardLedger.baselineInitialized = true;
+        }
         const seenPlanIds = new Set();
         next.plannedTasks = next.plannedTasks.filter(item => item && typeof item === 'object').map((task, index) => ({
           ...task,
@@ -348,7 +458,7 @@
         })) : RPE_REWARDS.map(reward => ({ ...reward }));
         next.lootTickets = Math.floor(boundedNumber(next.lootTickets, 0, 0, 1000000000));
         next.zeigarnikHook = String(next.zeigarnikHook || '').slice(0, 500);
-        next.schemaVersion = 6;
+        next.schemaVersion = CURRENT_SCHEMA_VERSION;
         next.xp = next.sessions.reduce((sum, session) => sum + session.minutes, 0) / 60;
         return next;
       }
@@ -415,7 +525,7 @@
         try {
           refreshTodayKey();
           state.xp = getStudyHours();
-          state.schemaVersion = 6;
+          state.schemaVersion = CURRENT_SCHEMA_VERSION;
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
           return true;
         } catch (e) {
@@ -434,14 +544,11 @@
       }
 
       function getStreak() {
-        const uniqueDates = new Set([
-          ...(state.sessions || []).map(session => session.date),
-          ...(state.streakFreezeDates || [])
-        ]);
+        const effectiveDates = getEffectiveStreakDates(state);
         let streak = 0;
         let checkDate = TODAY_KEY;
-        if (!uniqueDates.has(checkDate)) checkDate = addDays(TODAY_KEY, -1);
-        while (uniqueDates.has(checkDate)) {
+        if (!effectiveDates.has(checkDate)) checkDate = addDays(TODAY_KEY, -1);
+        while (effectiveDates.has(checkDate)) {
           streak++;
           checkDate = addDays(checkDate, -1);
         }
@@ -449,12 +556,13 @@
       }
 
       function maybeProtectStreak() {
-        if (!state.streakFreezeShards || state.sessions.some(session => session.date === TODAY_KEY)) return false;
+        const qualifyingDates = new Set(getQualifyingStudyDates(state));
+        if (!state.streakFreezeShards || qualifyingDates.has(TODAY_KEY)) return false;
         const yesterday = addDays(TODAY_KEY, -1);
         const dayBefore = addDays(TODAY_KEY, -2);
-        const studiedBefore = state.sessions.some(session => session.date === dayBefore);
+        const studiedBefore = qualifyingDates.has(dayBefore);
         const alreadyFrozen = (state.streakFreezeDates || []).includes(yesterday);
-        if (!alreadyFrozen && !state.sessions.some(session => session.date === yesterday) && studiedBefore) {
+        if (!alreadyFrozen && !qualifyingDates.has(yesterday) && studiedBefore) {
           state.streakFreezeShards -= 1;
           state.streakFreezeDates.push(yesterday);
           return true;
@@ -480,10 +588,27 @@
         if (count >= 3 && count % 3 === 0 && state.focusCombo.lastRewardedSessionId !== sessionId) {
           state.focusCombo.lastRewardedSessionId = sessionId;
           state.lootTickets += 1;
-          state.streakFreezeShards += 1;
           return true;
         }
         return false;
+      }
+
+      function processCompletedSessionRewards(sessionId, options = {}) {
+        const includeTicketRewards = options.includeTicketRewards !== false;
+        let ticketsAwarded = 0;
+        let comboAwarded = false;
+        if (includeTicketRewards) {
+          state.rewardProgressPomodoros = (state.rewardProgressPomodoros || 0) + 1;
+          const rewardThreshold = Math.max(1, Number(state.rewardConfig?.pomodorosPerTicket) || 4);
+          ticketsAwarded = Math.floor(state.rewardProgressPomodoros / rewardThreshold);
+          if (ticketsAwarded > 0) {
+            state.lootTickets += ticketsAwarded;
+            state.rewardProgressPomodoros %= rewardThreshold;
+          }
+          comboAwarded = maybeAwardFocusCombo(sessionId);
+        }
+        const shardMilestones = awardFreezeShardsForNewMilestones(state);
+        return { comboAwarded, ticketsAwarded, shardMilestones };
       }
 
       function getRewardProgressText() {
@@ -493,16 +618,32 @@
 
       function renderRewardSettings() {
         const comboCount = getFocusComboStatus();
+        const qualifyingDates = getQualifyingStudyDates(state);
+        const currentStudyStreak = getCurrentStudyStreak(state);
+        const todayQualified = qualifyingDates.includes(TODAY_KEY);
+        const progressDays = currentStudyStreak % FREEZE_SHARD_STREAK_LENGTH;
+        const daysUntilShard = progressDays === 0 ? FREEZE_SHARD_STREAK_LENGTH : FREEZE_SHARD_STREAK_LENGTH - progressDays;
+        const latestMilestone = [...(state.freezeShardLedger?.awardedMilestones || [])].sort().pop() || 'None yet';
         const comboCountEl = document.getElementById('cmdComboCount');
         const comboTextEl = document.getElementById('cmdComboText');
         const comboProgressEl = document.getElementById('cmdComboProgress');
         const comboTitleEl = document.getElementById('cmdComboTitle');
         const freezeTextEl = document.getElementById('cmdFreezeText');
+        const freezeMetaEl = document.getElementById('cmdFreezeMeta');
         if (comboCountEl) comboCountEl.textContent = `${Math.min(3, comboCount)} / 3`;
         if (comboProgressEl) comboProgressEl.style.width = `${Math.min(100, comboCount / 3 * 100)}%`;
         if (comboTitleEl) comboTitleEl.textContent = comboCount >= 3 ? 'Combo complete — keep the chain alive' : 'Build a 3-session flow';
-        if (comboTextEl) comboTextEl.textContent = comboCount >= 3 ? 'Your next qualifying session starts a new chain.' : `${3 - Math.min(3, comboCount)} high-focus session${3 - Math.min(3, comboCount) === 1 ? '' : 's'} to unlock a ticket and a freeze shard.`;
+        if (comboTextEl) comboTextEl.textContent = comboCount >= 3 ? 'Your next qualifying session starts a new chain.' : `${3 - Math.min(3, comboCount)} high-focus session${3 - Math.min(3, comboCount) === 1 ? '' : 's'} to unlock a ticket.`;
         if (freezeTextEl) freezeTextEl.textContent = `${state.streakFreezeShards || 0} freeze shard${state.streakFreezeShards === 1 ? '' : 's'} ready`;
+        if (freezeMetaEl) freezeMetaEl.textContent = `${currentStudyStreak} day${currentStudyStreak === 1 ? '' : 's'} · ${daysUntilShard} day${daysUntilShard === 1 ? '' : 's'} to next shard · Latest: ${latestMilestone}`;
+        const freezeStreakEl = document.getElementById('rewardFreezeStreak');
+        if (freezeStreakEl) freezeStreakEl.textContent = `${currentStudyStreak} day${currentStudyStreak === 1 ? '' : 's'} · ${progressDays}/${FREEZE_SHARD_STREAK_LENGTH}`;
+        const freezeStatusEl = document.getElementById('rewardFreezeStatus');
+        if (freezeStatusEl) {
+          freezeStatusEl.textContent = todayQualified
+            ? `Today's study day is counted. ${daysUntilShard} day${daysUntilShard === 1 ? '' : 's'} until the next Freeze Shard.`
+            : `Today is not counted yet. Study ${FREEZE_DAY_MINUTES} minutes to maintain the streak.`;
+        }
 
         const input = document.getElementById('rewardSessionsPerTicket');
         if (input) input.value = state.rewardConfig?.pomodorosPerTicket || 4;
@@ -1226,14 +1367,9 @@
         const todayMins = todaySessions.reduce((a, s) => a + (Number(s.minutes) || 0), 0);
 
         // Streak calculation
-        const uniqueDates = new Set(state.sessions.map(s => s.date));
-        let streak = 0;
-        let checkDate = TODAY_KEY;
-        if (!uniqueDates.has(checkDate)) checkDate = addDays(TODAY_KEY, -1);
-        while (uniqueDates.has(checkDate)) {
-          streak++;
-          checkDate = addDays(checkDate, -1);
-        }
+        const qualifyingDates = getQualifyingStudyDates(state);
+        const uniqueDates = new Set(qualifyingDates);
+        const streak = getStreak();
 
         // Exam countdown: distinguish an exam that has already passed.
         const hasExamDate = Boolean(state.onboarding.examDate);
@@ -1522,6 +1658,9 @@
         const container = document.getElementById('calendarGridContainer');
         const headerText = document.getElementById('calHeaderRangeText');
         container.innerHTML = '';
+        const qualifyingDateSet = new Set(getQualifyingStudyDates(state));
+        const frozenDateSet = new Set((state.streakFreezeDates || []).filter(isValidDateKey));
+        const shardMilestoneSet = new Set(state.freezeShardLedger?.awardedMilestones || []);
 
         if (calendarMode === 'week') {
           const todayDow = getDayOfWeekIndex(TODAY_KEY);
@@ -1537,10 +1676,13 @@
             const daySessions = state.sessions.filter(s => s.date === dKey);
             const plannedMins = dayTasks.reduce((a, b) => a + (Number(b.plannedMinutes) || 50), 0);
             const actualMins = daySessions.reduce((a, b) => a + (Number(b.minutes) || 0), 0);
+            const isQualifyingDay = qualifyingDateSet.has(dKey);
+            const isFrozenDay = frozenDateSet.has(dKey);
+            const isShardMilestone = shardMilestoneSet.has(dKey);
 
             const col = document.createElement('div');
             col.className = `sf-card p-3.5 flex flex-col justify-between min-h-[260px] ${
-              isToday ? 'border-[#22d3ee]' : isBlackout ? 'opacity-60 border-rose-900/40' : ''
+              isToday ? 'border-[#22d3ee]' : isBlackout ? 'opacity-60 border-rose-900/40' : isFrozenDay ? 'border-slate-600/70' : isQualifyingDay ? 'border-emerald-500/40' : ''
             }`;
 
             const tasksHtml = dayTasks.map(t => {
@@ -1562,6 +1704,11 @@
                   <div>
                     <div class="text-[10px] font-bold uppercase text-slate-400">${WEEKDAY_LABELS[d]}</div>
                     <div class="text-base font-extrabold font-mono ${isToday ? 'text-[#22d3ee]' : 'text-white'}">${dKey.slice(8)}</div>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      ${isQualifyingDay ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300">Study day</span>' : ''}
+                      ${isFrozenDay ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-500/15 text-slate-300">Frozen</span>' : ''}
+                      ${isShardMilestone ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300">+Shard</span>' : ''}
+                    </div>
                   </div>
                   <div class="text-right">
                     <div class="text-[11px] font-mono text-slate-300">${(plannedMins / 60).toFixed(1)}h plan</div>
@@ -1595,15 +1742,23 @@
           for (let i = 0; i < 35; i++) {
             const dKey = addDays(startGridKey, i);
             const isToday = dKey === TODAY_KEY;
-            const dayTasks = state.plannedTasks.filter(t => t.date === dKey);
+          const isQualifyingDay = qualifyingDateSet.has(dKey);
+          const isFrozenDay = frozenDateSet.has(dKey);
+          const isShardMilestone = shardMilestoneSet.has(dKey);
+          const dayTasks = state.plannedTasks.filter(t => t.date === dKey);
             const actualMins = state.sessions.filter(s => s.date === dKey).reduce((a, b) => a + (Number(b.minutes) || 0), 0);
 
             const cell = document.createElement('div');
-            cell.className = `sf-card p-2.5 min-h-[110px] flex flex-col justify-between text-xs ${isToday ? 'border-[#22d3ee]' : ''}`;
+            cell.className = `sf-card p-2.5 min-h-[110px] flex flex-col justify-between text-xs ${isToday ? 'border-[#22d3ee]' : isFrozenDay ? 'border-slate-600/70' : isQualifyingDay ? 'border-emerald-500/40' : ''}`;
             cell.innerHTML = `
               <div class="flex items-center justify-between">
                 <span class="font-mono font-bold ${isToday ? 'text-[#22d3ee]' : 'text-slate-300'}">${dKey.slice(8)}</span>
-                ${actualMins > 0 ? `<span class="text-[10px] font-mono text-[#22d3ee]">${actualMins}m</span>` : ''}
+                <span class="flex items-center gap-1">
+                  ${isQualifyingDay ? '<span class="text-[9px] text-emerald-300">●</span>' : ''}
+                  ${isFrozenDay ? '<span class="text-[9px] text-slate-300">◇</span>' : ''}
+                  ${isShardMilestone ? '<span class="text-[9px] text-amber-300">✦</span>' : ''}
+                  ${actualMins > 0 ? `<span class="text-[10px] font-mono text-[#22d3ee]">${actualMins}m</span>` : ''}
+                </span>
               </div>
               <div class="space-y-1 my-1">
                 ${dayTasks.slice(0, 2).map(t => `<div data-cal-task="${t.id}" class="truncate text-[10px] px-1.5 py-0.5 rounded bg-[#0f1620] text-slate-200 cursor-pointer hover:text-[#22d3ee]">${escapeHtml(t.topic)}</div>`).join('')}
@@ -2568,16 +2723,13 @@
           resourceId,
           timestamp: Date.now()
         });
-          const completedSession = state.sessions[state.sessions.length - 1];
-          state.rewardProgressPomodoros = (state.rewardProgressPomodoros || 0) + 1;
-          const rewardThreshold = Math.max(1, Number(state.rewardConfig?.pomodorosPerTicket) || 4);
-          if (state.rewardProgressPomodoros >= rewardThreshold) {
-            state.lootTickets += Math.floor(state.rewardProgressPomodoros / rewardThreshold);
-            state.rewardProgressPomodoros %= rewardThreshold;
-          }
-          const comboAwarded = maybeAwardFocusCombo(savedSessionId);
+        const completedSession = state.sessions[state.sessions.length - 1];
+        const rewardDelta = processCompletedSessionRewards(completedSession.id);
+        const comboAwarded = rewardDelta.comboAwarded;
+        const ticketsAwarded = rewardDelta.ticketsAwarded;
+        const newShardMilestones = rewardDelta.shardMilestones;
 
-          if (resourceId) {
+        if (resourceId) {
             const resource = state.resources.find(item => item.id === resourceId);
             if (resource) resource.completed = Math.min(resource.total, resource.completed + outCount);
           }
@@ -2637,7 +2789,12 @@
         } else if (cycleCount >= 4) { cycleCount = 1; setTimerMode('long'); }
         else { cycleCount++; setTimerMode('short'); }
         refreshAllViews();
-        showToast(`Session saved (${Math.round(pendingCompletedMinutes)}m${focusScore === null ? '' : ` · ${focusScore}★`})${comboAwarded ? ' · Combo reward unlocked!' : ''}`, comboAwarded ? '⚡' : '✓');
+        const rewardMessages = [
+          ticketsAwarded ? `+${ticketsAwarded} Reward Ticket${ticketsAwarded === 1 ? '' : 's'}` : '',
+          comboAwarded ? 'Focus combo ticket unlocked!' : '',
+          newShardMilestones.length ? `+${newShardMilestones.length} Freeze Shard${newShardMilestones.length === 1 ? '' : 's'} (${newShardMilestones.join(', ')})` : ''
+        ].filter(Boolean);
+        showToast(`Session saved (${Math.round(pendingCompletedMinutes)}m${focusScore === null ? '' : ` · ${focusScore}★`})${rewardMessages.length ? ` · ${rewardMessages.join(' · ')}` : ''}`, rewardMessages.length ? '🎁' : '✓');
       }
 
       function restorePendingCompletion() {
@@ -3295,8 +3452,9 @@
           const cIds = Array.from(document.querySelectorAll('.manual-subj-chk:checked')).map(x => x.value);
           if (cIds.length === 0) { showToast('Choose at least one subject.', '⚠️'); return; }
           const previousState = JSON.parse(JSON.stringify(state));
+          const manualSessionId = createId('session');
           state.sessions.push({
-            id: createId('session'),
+            id: manualSessionId,
             date: dVal,
             minutes: mVal,
             subjectIds: cIds,
@@ -3311,6 +3469,7 @@
             nextStep: '',
             timestamp: Date.now()
           });
+          const manualRewardDelta = processCompletedSessionRewards(manualSessionId, { includeTicketRewards: false });
           updateMilestonesProgress(cIds, mVal, 1);
           if (!saveState()) {
             state = previousState;
@@ -3319,7 +3478,10 @@
           }
           closeMan();
           refreshAllViews();
-          showToast(`Logged ${mVal}m on ${dVal}.`, '✅');
+          const manualRewardMessage = manualRewardDelta.shardMilestones.length
+            ? ` · +${manualRewardDelta.shardMilestones.length} Freeze Shard${manualRewardDelta.shardMilestones.length === 1 ? '' : 's'}`
+            : '';
+          showToast(`Logged ${mVal}m on ${dVal}${manualRewardMessage}.`, manualRewardMessage ? '🎁' : '✅');
         });
 
         // Breathing Modal

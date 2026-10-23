@@ -1,4 +1,4 @@
-# Tflow v2.0
+# Tflow v2.1
 
 Tflow là một **local-first Smart Study OS**: ứng dụng web chạy trên máy người dùng để lập kế hoạch học tập, thực hiện các phiên tập trung, lưu kết quả, theo dõi tiến độ và điều chỉnh nhịp học. Ứng dụng không có backend và không yêu cầu tài khoản; dữ liệu được lưu trong `localStorage` của trình duyệt hiện tại.
 
@@ -6,7 +6,7 @@ README này mô tả cả cách sử dụng và cấu trúc để coder khác ho
 
 ## 1. Phạm vi dự án
 
-Tflow v2.0 hiện là một ứng dụng web tĩnh gồm:
+Tflow v2.1 hiện là một ứng dụng web tĩnh gồm:
 
 - `index.html`: toàn bộ layout, các view, modal, CSS token và cấu hình Tailwind.
 - `app.js`: state, logic nghiệp vụ, router view, timer, render và event handlers.
@@ -123,7 +123,7 @@ Khi lưu, Tflow:
 - cập nhật resource progress nếu có resource;
 - cập nhật milestone theo minutes, sessions hoặc output;
 - cập nhật reward progress;
-- cập nhật focus combo và streak-freeze shard;
+- cập nhật focus combo và Freeze Shard theo các pipeline độc lập;
 - đánh dấu planned task hoàn thành nếu session được liên kết phù hợp;
 - chuyển sang short/long break nếu người dùng chọn.
 
@@ -207,7 +207,7 @@ Reward Lab tạo phần thưởng cho sự đều đặn:
 - theo dõi combo focus;
 - nhận streak-freeze shard.
 
-Ba phiên liên tiếp có focus score từ 4 trở lên và không bị blocker sẽ tạo một reward ticket cùng một streak-freeze shard. Shard có thể tự bảo vệ streak cho một ngày bỏ lỡ nếu ngày trước đó đã có hoạt động học.
+Ba phiên liên tiếp có focus score từ 4 trở lên và không bị blocker sẽ tạo một reward ticket. Freeze Shard là phần thưởng độc lập: một ngày học hợp lệ cần ít nhất 15 phút học thực tế; ba ngày liên tục tạo một shard, các mốc tiếp theo là 6, 9 ngày không chồng lấn. Nhiều session trong cùng ngày chỉ tính một ngày. Short/long break, session tương lai và ngày được bảo vệ bởi freeze không tạo tiến độ shard. Shard có thể bảo vệ một ngày bỏ lỡ cho streak hiển thị.
 
 ### Settings & Subjects Manager
 
@@ -328,8 +328,13 @@ state = {
   focusCombo: {},
   streakFreezeShards: 0,
   streakFreezeDates: [],
+  freezeShardLedger: {
+    ruleVersion: 2,
+    awardedMilestones: [],
+    baselineInitialized: false
+  },
   zeigarnikHook: '',
-  schemaVersion: 6
+  schemaVersion: 7
 }
 ```
 
@@ -379,7 +384,7 @@ Luồng save:
 
 - cập nhật `TODAY_KEY`;
 - tính lại `xp` từ tổng phút trong sessions;
-- đặt `schemaVersion = 6`;
+- đặt `schemaVersion = 7`;
 - stringify state vào localStorage.
 
 Không được đưa secret, token, thông tin nhạy cảm hoặc dữ liệu cần bảo mật vào state vì localStorage không phải storage bảo mật.
@@ -474,6 +479,6 @@ Ngoài syntax, nên kiểm tra thủ công các luồng sau:
 
 ## 11. Phiên bản
 
-**Tflow v2.0 — Smart Study OS & Pomodoro Tracker**
+**Tflow v2.1 — Smart Study OS & Pomodoro Tracker**
 
-Bản v2.0 tập trung vào workflow học hoàn chỉnh: lập kế hoạch → tập trung → ghi nhận kết quả → cập nhật milestone/resource → review → phân tích → điều chỉnh nhịp học. 
+Bản v2.1 tập trung vào workflow học hoàn chỉnh: lập kế hoạch → tập trung → ghi nhận kết quả → cập nhật milestone/resource → review → phân tích → điều chỉnh nhịp học, với Freeze Shard theo chuỗi ngày học và ledger chống cấp trùng.
