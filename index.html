@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tflow — Smart Study OS & Pomodoro Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#070a0f" media="(prefers-color-scheme: dark)" />
+  <title>Tflow — Focus, plan, progress</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#070a0f">
-  <meta name="application-name" content="Tflow">
+    <meta name="application-name" content="Tflow">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/tflow-192.png">
   <link rel="apple-touch-icon" href="icons/tflow-192.png">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
   <script>
@@ -37,13 +37,31 @@
       --sf-border-hover: #1e2d40;
       --sf-cyan: #22d3ee;
       --sf-cyan-btn: #1cc5dc;
+      --sf-ink: #f8fafc;
+      --sf-muted: #8fa1b5;
+      --sf-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --sf-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+      --sf-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    html {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+      overscroll-behavior: none;
     }
     body {
       font-family: 'Inter', sans-serif;
       background-color: var(--sf-bg);
-      color: #f1f5f9;
+      color: var(--sf-ink);
       overflow-x: hidden;
+      min-height: 100dvh;
     }
+    button, a, [role="button"], select, input[type="checkbox"] {
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    input, textarea, select { font-size: 16px; }
     .sf-card {
       background-color: var(--sf-card);
       border: 1px solid var(--sf-border);
@@ -70,7 +88,7 @@
       color: #031519;
       font-weight: 600;
       border-radius: 10px;
-      transition: all 0.15s ease;
+      transition: background-color 160ms var(--sf-ease-out), border-color 160ms var(--sf-ease-out), color 160ms var(--sf-ease-out), transform 160ms var(--sf-ease-out);
     }
     .sf-btn-primary:hover {
       background-color: #38d9ed;
@@ -81,12 +99,17 @@
       color: #cbd5e1;
       font-weight: 500;
       border-radius: 10px;
-      transition: all 0.15s ease;
+      transition: background-color 160ms var(--sf-ease-out), border-color 160ms var(--sf-ease-out), color 160ms var(--sf-ease-out), transform 160ms var(--sf-ease-out);
     }
     .sf-btn-secondary:hover {
       background-color: #16202e;
       color: #ffffff;
       border-color: #283a52;
+    }
+    .sf-btn-primary:active, .sf-btn-secondary:active, .sf-nav-item:active { transform: scale(.97); }
+    @media (hover: hover) and (pointer: fine) {
+      .sf-card:hover { border-color: var(--sf-border-hover); }
+      .sf-inner:hover { border-color: rgba(34, 211, 238, .28); }
     }
     .sf-nav-item {
       display: flex;
@@ -98,7 +121,7 @@
       font-size: 13px;
       font-weight: 500;
       color: #94a3b8;
-      transition: all 0.15s ease;
+      transition: background-color 160ms var(--sf-ease-out), border-color 160ms var(--sf-ease-out), color 160ms var(--sf-ease-out), transform 160ms var(--sf-ease-out);
       text-align: left;
     }
     .sf-nav-item:hover {
@@ -151,6 +174,29 @@
       background: rgba(100, 116, 139, 0.35);
       border-radius: 9999px;
     }
+    .sf-icon { width: 1em; height: 1em; flex: 0 0 auto; display: inline-block; vertical-align: -0.13em; }
+    .icon-chip { width: 1.15rem; text-align: center; color: currentColor; }
+    .rpe-stage { position: relative; min-height: 170px; display: grid; place-items: center; overflow: hidden; border-radius: 14px; background: radial-gradient(circle at 50% 30%, rgba(34,211,238,.18), transparent 58%), #0a111b; }
+    .rpe-stage::before { content: ''; position: absolute; width: 210px; height: 210px; border-radius: 50%; border: 1px dashed rgba(34,211,238,.24); box-shadow: 0 0 50px rgba(34,211,238,.12); }
+    .rpe-wheel { position: absolute; width: 140px; height: 140px; border-radius: 50%; background: conic-gradient(#64748b 0 60%, #34d399 60% 85%, #60a5fa 85% 95%, #fbbf24 95% 100%); opacity: .22; filter: blur(.2px); transition: transform .9s cubic-bezier(.18,.8,.24,1); }
+    .rpe-core { position: relative; z-index: 2; width: 84px; height: 84px; border-radius: 24px; display: grid; place-items: center; color: #fbbf24; background: linear-gradient(145deg, #182537, #0b111b); border: 1px solid rgba(251,191,36,.45); box-shadow: 0 0 0 7px rgba(251,191,36,.06), 0 16px 50px rgba(0,0,0,.35); }
+    .rpe-stage.is-spinning .rpe-wheel { animation: rpe-wheel-spin .9s cubic-bezier(.18,.8,.24,1); }
+    .rpe-stage.is-spinning .rpe-core { animation: rpe-core-pulse .9s ease-in-out; }
+    .rpe-stage.is-revealed .rpe-core { animation: rpe-reveal .55s var(--sf-ease-out); }
+    .rpe-spark { position:absolute; width:5px; height:5px; border-radius:999px; background:var(--spark-color,#22d3ee); opacity:0; }
+    .rpe-stage.is-spinning .rpe-spark { animation: rpe-spark .9s var(--sf-ease-out) both; }
+    .rpe-spark:nth-child(2) { top:18%; left:25%; --spark-color:#22d3ee; animation-delay:40ms !important; }
+    .rpe-spark:nth-child(3) { top:32%; right:18%; --spark-color:#fbbf24; animation-delay:120ms !important; }
+    .rpe-spark:nth-child(4) { bottom:20%; left:20%; --spark-color:#34d399; animation-delay:200ms !important; }
+    .rpe-spark:nth-child(5) { bottom:28%; right:25%; --spark-color:#a78bfa; animation-delay:280ms !important; }
+    @keyframes rpe-spark { 0% { opacity:0; transform:translateY(8px) scale(.6); } 45% { opacity:1; transform:translateY(-10px) scale(1); } 100% { opacity:0; transform:translateY(-22px) scale(.8); } }
+    @keyframes rpe-wheel-spin { from { transform: rotate(0deg) scale(.86); } to { transform: rotate(920deg) scale(1.08); } }
+    @keyframes rpe-core-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18) rotate(-4deg); } }
+    @keyframes rpe-reveal { 0% { transform: scale(.7); opacity: .2; } 70% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
+    .reward-rarity { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .pace-card[data-status="ahead"], .pace-card[data-status="done"] { border-color: rgba(52,211,153,.42); }
+    .pace-card[data-status="behind"] { border-color: rgba(251,191,36,.42); }
+
     @media (max-width: 767px) {
       body { font-size: 14px; }
       #stepflowSidebar {
@@ -169,6 +215,9 @@
       #toastContainer > div { width: 100%; }
       .sf-card { border-radius: 12px; }
     }
+    .combo-meter { position:relative; overflow:hidden; }
+    .combo-meter::after { content:''; position:absolute; inset:0; transform:translateX(-110%); background:linear-gradient(90deg,transparent,rgba(34,211,238,.28),transparent); animation:combo-sheen 2.8s linear infinite; pointer-events:none; }
+    @keyframes combo-sheen { to { transform:translateX(110%); } }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
     }
@@ -194,24 +243,24 @@
         <div class="space-y-1">
           <div class="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">OVERVIEW</div>
           <button type="button" data-nav="command" class="sf-nav-item active">
-            <span class="text-sm">⌂</span>
+            <i class="fa-pixel fa-regular fa-house icon-chip"></i>
             <span>Dashboard</span>
           </button>
           <button type="button" data-nav="today" class="sf-nav-item">
-            <span class="text-sm">◎</span>
+            <i class="fa-pixel fa-regular fa-bullseye icon-chip"></i>
             <span>Today's Focus</span>
             <span id="navBadgeToday" class="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#11222e] text-[#22d3ee]">0</span>
           </button>
           <button type="button" data-nav="calendar" class="sf-nav-item">
-            <span class="text-sm">📅</span>
+            <i class="fa-pixel fa-regular fa-calendar icon-chip"></i>
             <span>Calendar</span>
           </button>
           <button type="button" data-nav="master" class="sf-nav-item">
-            <span class="text-sm">🧭</span>
+            <i class="fa-pixel fa-regular fa-compass icon-chip"></i>
             <span>Plan & Goals</span>
           </button>
           <button type="button" data-nav="timer" class="sf-nav-item">
-            <span class="text-sm">⏱️</span>
+            <i class="fa-pixel fa-regular fa-stopwatch icon-chip"></i>
             <span>Study Timer</span>
           </button>
         </div>
@@ -220,20 +269,20 @@
         <div class="space-y-1">
           <div class="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">MANAGE</div>
           <button type="button" data-nav="tasks" class="sf-nav-item">
-            <span class="text-sm">☰</span>
+            <i class="fa-pixel fa-regular fa-list-check icon-chip"></i>
             <span>Milestones & Resources</span>
           </button>
           <button type="button" data-nav="assessments" class="sf-nav-item">
-            <span class="text-sm">🧠</span>
+            <i class="fa-pixel fa-regular fa-brain icon-chip"></i>
             <span>Review & Assess</span>
             <span id="navBadgeSr" class="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">0</span>
           </button>
           <button type="button" data-nav="analytics" class="sf-nav-item">
-            <span class="text-sm">📊</span>
+            <i class="fa-pixel fa-regular fa-chart-simple icon-chip"></i>
             <span>Analytics</span>
           </button>
           <button type="button" data-nav="sessions" class="sf-nav-item">
-            <span class="text-sm">📄</span>
+            <i class="fa-pixel fa-regular fa-file-lines icon-chip"></i>
             <span>Session History</span>
           </button>
         </div>
@@ -242,11 +291,12 @@
         <div class="space-y-1">
           <div class="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">CONFIGURE</div>
           <button type="button" data-nav="setup" class="sf-nav-item">
-            <span class="text-sm">🎛️</span>
+            <i class="fa-pixel fa-regular fa-sliders icon-chip"></i>
             <span>Planning Setup</span>
           </button>
           <button type="button" data-nav="settings" class="sf-nav-item">
-            <span class="text-sm">⚙️</span>
+            <i class="fa-pixel fa-regular fa-user icon-chip"></i>
+            <i class="fa-pixel fa-regular fa-gear icon-chip"></i>
             <span>Settings</span>
           </button>
         </div>
@@ -255,7 +305,7 @@
       <!-- Footer -->
       <div class="p-4 border-t border-[#121b26] text-[11px] text-slate-500 flex items-center justify-between">
         <span>Offline Storage</span>
-        <span class="text-[#22d3ee] font-mono">v1.0</span>
+        <span class="text-[#22d3ee] font-mono">v2.0</span>
       </div>
     </aside>
 
@@ -265,30 +315,30 @@
       <!-- Topbar -->
       <header class="sticky top-0 z-30 h-13 border-b border-[#121b26] bg-[#070a0f]/90 backdrop-blur-md px-6 py-2.5 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <button id="btnSidebarToggle" type="button" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#0f1620] transition" title="Đóng/Mở Sidebar">
+          <button id="btnSidebarToggle" type="button" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#0f1620] transition" title="Toggle sidebar">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
               <rect x="3" y="3" width="18" height="18" rx="2"></rect>
               <line x1="9" y1="3" x2="9" y2="21"></line>
             </svg>
           </button>
           <span id="topbarActiveTimerPill" class="hidden items-center gap-2 px-2.5 py-1 rounded-full bg-[#0d2833] border border-[#164e63] text-xs font-mono text-[#22d3ee] cursor-pointer">
-            <span>⏱️</span>
+            <i class="fa-pixel fa-regular fa-stopwatch"></i>
             <span id="topbarTimerText">50:00</span>
           </span>
         </div>
 
         <div class="flex items-center gap-2.5">
           <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#19130a] border border-[#3d2c12] text-xs font-semibold text-amber-400" title="Study Streak">
-            <span>🔥</span>
+            <i class="fa-pixel fa-regular fa-fire"></i>
             <span id="headerStreakCount">0</span>
           </div>
-        <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0b1f28] border border-[#154557] text-xs font-semibold text-[#22d3ee]" title="Tổng số giờ học">
-            <span>⚡</span>
+        <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0b1f28] border border-[#154557] text-xs font-semibold text-[#22d3ee]" title="Total study hours">
+            <i class="fa-pixel fa-regular fa-bolt"></i>
           <span id="headerXpCount">0.0</span>
-          <span class="text-[10px] text-cyan-300/70">giờ XP</span>
+          <span class="text-[10px] text-cyan-300/70">XP hours</span>
           </div>
-          <button id="btnOpenPomodoroSettingsTop" type="button" class="w-8 h-8 rounded-full bg-[#0c121b] border border-[#182332] flex items-center justify-center text-slate-400 hover:text-white text-xs transition" title="Cài đặt Âm thanh Sóng não & Chuông">
-            🎧
+          <button id="btnOpenPomodoroSettingsTop" type="button" class="w-8 h-8 rounded-full bg-[#0c121b] border border-[#182332] flex items-center justify-center text-slate-400 hover:text-white text-xs transition" title="Audio and timer settings">
+            <i class="fa-pixel fa-regular fa-headphones"></i>
           </button>
         </div>
       </header>
@@ -304,12 +354,12 @@
             </div>
             <div class="flex flex-wrap items-center gap-2 text-xs">
               <span class="px-2 py-0.5 rounded-full bg-[#0c2631] text-[#22d3ee] font-semibold text-[11px] border border-[#164e63]">Local Mode</span>
-              <span class="text-slate-300">Dữ liệu tự động lưu trên máy. Hãy thêm nội dung của bạn hoặc nhập từ file sao lưu JSON.</span>
+              <span class="text-slate-300">Your data stays on this device. Add your own study content or restore a JSON backup.</span>
             </div>
           </div>
           <div class="flex items-center gap-2">
             <button id="btnBackupModal" type="button" class="sf-btn-secondary px-3.5 py-1.5 text-xs flex items-center gap-1.5">
-              <span>💾 Lưu trữ Local</span>
+              <span><i class="fa-pixel fa-regular fa-floppy-disk mr-1"></i> Local backup</span>
             </button>
           </div>
         </div>
@@ -320,13 +370,13 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 class="text-2xl font-bold tracking-tight text-white">Command Center</h1>
-              <p class="text-xs text-slate-400 mt-0.5">Good evening • Ready to crush your study goals today?</p>
+              <p class="text-xs text-slate-400 mt-0.5">Make today count. What will you move forward?</p>
             </div>
             <div class="sf-card px-4 py-2.5 flex items-center gap-3 self-start sm:self-auto">
               <div class="w-8 h-8 rounded-full bg-[#0c2631] border border-[#164e63] flex items-center justify-center text-[#22d3ee] text-xs">🕒</div>
               <div>
                 <div id="cmdLiveClock" class="text-sm font-bold font-mono text-white">11:16 PM</div>
-                <div id="cmdLiveDate" class="text-[11px] text-slate-400">Chủ nhật, 18 Tháng 10, 2026</div>
+                <div id="cmdLiveDate" class="text-[11px] text-slate-400">Sunday, October 18, 2026</div>
               </div>
               <div class="pl-3 border-l border-[#151f2c] text-[11px] text-slate-500 hidden sm:block">
                 📍 Hanoi
@@ -348,7 +398,7 @@
             <div class="sf-card p-4 flex flex-col justify-between">
               <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 <span>TARGET READINESS</span>
-                <span class="text-[#22d3ee]">🎯</span>
+                <i class="fa-pixel fa-regular fa-bullseye text-[#22d3ee]"></i>
               </div>
               <div id="cmdKpiReadiness" class="text-3xl font-extrabold text-white font-mono mt-2">78%</div>
               <div id="cmdKpiPhaseSub" class="text-[11px] text-slate-500 mt-1 truncate">Intensive Phase</div>
@@ -357,7 +407,7 @@
             <div class="sf-card p-4 flex flex-col justify-between">
               <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 <span>STUDY STREAK</span>
-                <span class="text-amber-400">🔥</span>
+                <i class="fa-pixel fa-regular fa-fire text-amber-400"></i>
               </div>
               <div id="cmdKpiStreak" class="text-3xl font-extrabold text-white font-mono mt-2">0</div>
               <div class="text-[11px] text-slate-500 mt-1">consecutive days</div>
@@ -365,12 +415,38 @@
 
             <div class="sf-card p-4 flex items-center justify-between gap-3">
               <div>
-                <div class="text-[11px] font-semibold uppercase text-slate-400">RANK HIỆN TẠI</div>
+                <div class="text-[11px] font-semibold uppercase text-slate-400">CURRENT RANK</div>
                 <div id="cmdRankName" class="text-lg font-extrabold text-amber-300 mt-1">Newbie</div>
-                <div id="cmdRankProgressText" class="text-[11px] text-slate-500 mt-0.5">0.0 giờ đã học</div>
+                <div id="cmdRankProgressText" class="text-[11px] text-slate-500 mt-0.5">0.0 study hours</div>
                 <span id="cmdKpiTodayTime" class="hidden">0h 0m</span>
               </div>
-              <button id="btnCmdViewRanking" type="button" class="text-xs text-[#22d3ee] hover:underline">Chi tiết</button>
+              <button id="btnCmdViewRanking" type="button" class="text-xs text-[#22d3ee] hover:underline">Details</button>
+            </div>
+          </div>
+
+          <div id="cmdMotivationCard" class="sf-card combo-meter p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-[#0c2631] border border-[#164e63] grid place-items-center text-[#22d3ee]"><i class="fa-pixel fa-regular fa-bolt"></i></div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between gap-2"><span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Focus chain</span><span id="cmdComboCount" class="font-mono text-[#22d3ee]">0 / 3</span></div>
+                <div id="cmdComboTitle" class="text-sm font-bold text-white mt-1">Build a 3-session flow</div>
+                <p id="cmdComboText" class="text-xs text-slate-400 mt-0.5">Three uninterrupted sessions at 4★ or above unlock a ticket and a freeze shard.</p>
+                <div class="h-1.5 bg-[#141f2d] rounded-full overflow-hidden mt-3"><div id="cmdComboProgress" class="h-full bg-[#22d3ee] transition-[width] duration-500" style="width:0%"></div></div>
+              </div>
+            </div>
+            <div class="sf-inner p-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 grid place-items-center text-emerald-300"><i class="fa-pixel fa-regular fa-shield-halved"></i></div>
+              <div class="min-w-0"><div class="text-[11px] text-slate-500">Streak protection</div><div id="cmdFreezeText" class="text-sm font-bold text-emerald-300">0 freeze shards ready</div><div class="text-[11px] text-slate-400">Automatically covers one missed study day.</div></div>
+            </div>
+          </div>
+
+          <div id="cmdPacePredictor" class="pace-card sf-card p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-[#0c2631] border border-[#164e63] grid place-items-center text-[#22d3ee] shrink-0"><i class="fa-pixel fa-regular fa-chart-line"></i></div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-3"><span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Pace predictor</span><span id="cmdPaceMeta" class="text-[11px] font-mono text-slate-500">No deadline configured</span></div>
+              <div id="cmdPaceTitle" class="text-sm font-bold text-white mt-1">Set an exam date to see your pace</div>
+              <p id="cmdPaceText" class="text-xs text-slate-400 mt-0.5">Tflow will compare your recent study pace with the work left before the deadline.</p>
+              <div class="h-1.5 bg-[#141f2d] rounded-full overflow-hidden mt-3"><div id="cmdPaceBar" class="h-full bg-[#22d3ee] transition-[width] duration-700" style="width:0%"></div></div>
             </div>
           </div>
 
@@ -381,7 +457,7 @@
               <div>
                 <div class="text-xs font-bold text-amber-300 uppercase tracking-wider">Adaptive Recovery — One-Click "Spread Across"</div>
                 <p id="cmdAdaptiveText" class="text-xs text-slate-300 mt-0.5">
-                  Phát hiện các phiên học bị trễ từ những ngày trước. Tự động phân bổ đều sang các ngày còn trống mà không chạm vào ngày nghỉ (Blackout Days).
+                  Missed sessions are waiting. Spread them across open days without touching blackout days.
                 </p>
               </div>
             </div>
@@ -398,7 +474,7 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <h2 class="text-sm font-bold text-white flex items-center gap-2">
-                      <span class="text-[#22d3ee]">◎</span>
+                      <i class="fa-pixel fa-regular fa-bullseye text-[#22d3ee]"></i>
                       <span>Today's Plan</span>
                     </h2>
                     <p id="cmdTodayPlanSub" class="text-xs text-slate-400 mt-0.5">0/0 completed • 0m remaining</p>
@@ -409,7 +485,7 @@
                 </div>
 
                 <div class="w-full h-1.5 bg-[#121b28] rounded-full overflow-hidden">
-                  <div id="cmdTodayProgressBar" class="h-full bg-[#22d3ee] transition-all duration-500" style="width: 0%"></div>
+                  <div id="cmdTodayProgressBar" class="h-full bg-[#22d3ee] transition-[width] duration-500" style="width: 0%"></div>
                 </div>
 
                 <div id="cmdTodayTasksList" class="space-y-2 max-h-60 overflow-y-auto custom-scroll pr-1"></div>
@@ -417,11 +493,11 @@
 
               <!-- Zeigarnik Next Step Hook -->
               <div class="sf-inner p-3 flex items-center justify-between gap-2 text-xs">
-                <span class="text-amber-400 font-semibold shrink-0">🪝 Next Step:</span>
-                <input id="cmdZeigarnikInput" type="text" placeholder="Ghim bước tiếp theo để vào bàn học là làm ngay..."
+                <span class="text-amber-400 font-semibold shrink-0"><i class="fa-pixel fa-regular fa-thumbtack mr-1"></i>Next step:</span>
+                <input id="cmdZeigarnikInput" type="text" placeholder="Pin the next step so starting feels obvious..."
                   class="flex-1 bg-transparent border-none text-slate-200 focus:outline-none text-xs" />
                 <button id="btnCmdSaveZeigarnik" type="button" class="px-2.5 py-1 rounded-lg bg-[#162232] hover:bg-[#1e2f44] text-[#22d3ee] font-semibold text-[11px]">
-                  Ghim
+                  Pin
                 </button>
               </div>
             </div>
@@ -430,7 +506,7 @@
             <div class="lg:col-span-5 sf-card p-5 flex flex-col justify-between space-y-4">
               <div>
                 <h2 class="text-sm font-bold text-white flex items-center gap-2">
-                  <span class="text-[#22d3ee]">📈</span>
+                  <i class="fa-pixel fa-regular fa-chart-line text-[#22d3ee]"></i>
                   <span>Overall Progress</span>
                 </h2>
                 <p class="text-xs text-slate-400 mt-0.5">Your study journey so far</p>
@@ -479,7 +555,7 @@
                   <h2 class="text-sm font-bold text-white">52-Week Multi-Layer Study Heatmap</h2>
                   <span id="heatmapTotalSummaryBadge" class="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-[#0c2631] text-[#22d3ee] border border-[#164e63]">0 sessions</span>
                 </div>
-                <p class="text-xs text-slate-400 mt-0.5">Chuyển đổi giữa Số phút thực tế, % Mục tiêu ngày, Số phiên học và Điểm tập trung (1–5★)</p>
+                <p class="text-xs text-slate-400 mt-0.5">Switch between minutes, target completion, sessions, and focus score (1–5★)</p>
               </div>
               <button id="btnOpenManualLogModal" type="button" class="sf-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5">
                 <span>+ Log Past Session</span>
@@ -491,16 +567,16 @@
               <div>
                 <label for="heatmapLayerSelect" class="block text-[11px] text-slate-400 mb-1">Data Layer</label>
                 <select id="heatmapLayerSelect" class="sf-input w-full px-2.5 py-1.5 text-xs">
-                  <option value="minutes">⏱️ Số phút học thực tế (Actual Minutes)</option>
-                  <option value="completion">🎯 % Hoàn thành mục tiêu ngày (% Target)</option>
-                  <option value="sessions">🍅 Số phiên học (Sessions)</option>
-                  <option value="focus">🧠 Mức độ tập trung (Focus 1–5★)</option>
+                  <option value="minutes">⏱️ Actual study minutes</option>
+                  <option value="completion">🎯 Daily target completion</option>
+                  <option value="sessions">🍅 Study sessions</option>
+                  <option value="focus">🧠 Focus score (1–5★)</option>
                 </select>
               </div>
               <div>
                 <label for="heatmapSubjectFilter" class="block text-[11px] text-slate-400 mb-1">Subject Filter</label>
                 <select id="heatmapSubjectFilter" class="sf-input w-full px-2.5 py-1.5 text-xs">
-                  <option value="all">Tất cả môn học</option>
+                  <option value="all">All subjects</option>
                 </select>
               </div>
               <div>
@@ -517,9 +593,9 @@
                 <input id="heatmapTargetInput" type="number" min="25" max="480" step="15" value="100" class="sf-input w-full px-2.5 py-1.5 text-xs font-mono" />
               </div>
               <div class="sm:col-span-2 lg:col-span-4 grid grid-cols-3 gap-2">
-                <label class="text-[10px] text-slate-500">Màu 2 từ (% mục tiêu)<input id="heatmapThreshold1" type="number" min="1" max="98" class="sf-input w-full mt-1 px-2 py-1 text-xs" /></label>
-                <label class="text-[10px] text-slate-500">Màu 3 từ (% mục tiêu)<input id="heatmapThreshold2" type="number" min="2" max="99" class="sf-input w-full mt-1 px-2 py-1 text-xs" /></label>
-                <label class="text-[10px] text-slate-500">Màu cao nhất từ (% mục tiêu)<input id="heatmapThreshold3" type="number" min="3" max="100" class="sf-input w-full mt-1 px-2 py-1 text-xs" /></label>
+                <label class="text-[10px] text-slate-500">Level 2 from (% target)<input id="heatmapThreshold1" type="number" min="1" max="98" class="sf-input w-full mt-1 px-2 py-1 text-xs" /></label>
+                <label class="text-[10px] text-slate-500">Level 3 from (% target)<input id="heatmapThreshold2" type="number" min="2" max="99" class="sf-input w-full mt-1 px-2 py-1 text-xs" /></label>
+                <label class="text-[10px] text-slate-500">Top level from (% target)<input id="heatmapThreshold3" type="number" min="3" max="100" class="sf-input w-full mt-1 px-2 py-1 text-xs" /></label>
               </div>
             </div>
 
@@ -540,7 +616,7 @@
                   <div id="heatmapGrid" class="heatmap-grid"></div>
                 </div>
                 <div class="mt-3 pt-2.5 border-t border-[#151f2c] flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
-                  <div id="heatmapHoverStatus">Di chuột hoặc nhấn vào ô ngày để xem chi tiết Session Intelligence.</div>
+                  <div id="heatmapHoverStatus">Hover or tap a day to inspect the session details.</div>
                   <div class="flex items-center gap-1.5">
                     <span>Less</span>
                     <span id="legendBox0" class="w-3 h-3 rounded-[3px] inline-block"></span>
@@ -558,7 +634,7 @@
             <div class="sf-inner p-3.5 space-y-2">
               <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div class="flex items-center gap-2">
-                  <span id="detailCardDateTitle" class="font-bold text-[#22d3ee]">Hôm nay</span>
+                  <span id="detailCardDateTitle" class="font-bold text-[#22d3ee]">Today</span>
                   <span id="detailCardSummaryPill" class="px-2 py-0.5 rounded bg-[#14202e] text-slate-300 font-mono text-[11px]">0 sessions</span>
                 </div>
                 <span id="detailCardPlanComparison" class="text-slate-400"></span>
@@ -573,15 +649,15 @@
             <div class="sf-card p-5 space-y-2.5">
               <h3 class="text-sm font-bold text-white mb-1">Quick Actions</h3>
               <button id="qaStartTimer" type="button" class="sf-inner w-full p-3 flex items-center justify-between text-xs hover:border-[#22d3ee]/50 transition">
-                <span class="flex items-center gap-2.5 font-medium text-slate-200"><span class="text-[#22d3ee]">▶</span> Start Study Session</span>
+                <span class="flex items-center gap-2.5 font-medium text-slate-200"><i class="fa-pixel fa-regular fa-play text-[#22d3ee]"></i> Start Study Session</span>
                 <span class="text-slate-500">→</span>
               </button>
               <button id="qaViewToday" type="button" class="sf-inner w-full p-3 flex items-center justify-between text-xs hover:border-[#22d3ee]/50 transition">
-                <span class="flex items-center gap-2.5 font-medium text-slate-200"><span class="text-[#22d3ee]">◎</span> View Today's Execution</span>
+                <span class="flex items-center gap-2.5 font-medium text-slate-200"><i class="fa-pixel fa-regular fa-bullseye text-[#22d3ee]"></i> View Today's Execution</span>
                 <span class="text-slate-500">→</span>
               </button>
               <button id="qaOpenCalendar" type="button" class="sf-inner w-full p-3 flex items-center justify-between text-xs hover:border-[#22d3ee]/50 transition">
-                <span class="flex items-center gap-2.5 font-medium text-slate-200"><span class="text-[#22d3ee]">📅</span> Open Study Calendar</span>
+                <span class="flex items-center gap-2.5 font-medium text-slate-200"><i class="fa-pixel fa-regular fa-calendar text-[#22d3ee]"></i> Open Study Calendar</span>
                 <span class="text-slate-500">→</span>
               </button>
               <button id="qaOpenNeuro" type="button" class="sf-inner w-full p-3 flex items-center justify-between text-xs hover:border-[#22d3ee]/50 transition">
@@ -594,7 +670,7 @@
             <div class="sf-card p-5 space-y-3">
               <div class="flex items-center justify-between">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                  <span class="text-[#22d3ee]">🏆</span>
+                  <i class="fa-pixel fa-regular fa-trophy text-[#22d3ee]"></i>
                   <span>Active Milestones</span>
                 </h3>
                 <button id="btnCmdGoMilestones" type="button" class="text-xs text-slate-400 hover:text-[#22d3ee]">Manage →</button>
@@ -606,7 +682,7 @@
             <div class="sf-card p-5 space-y-3">
               <div class="flex items-center justify-between">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                  <span class="text-amber-400">⚠️</span>
+                  <i class="fa-pixel fa-regular fa-triangle-exclamation text-amber-400"></i>
                   <span>Weak Areas</span>
                 </h3>
                 <button id="btnCmdGoWeakAreas" type="button" class="text-xs text-slate-400 hover:text-[#22d3ee]">Remediation →</button>
@@ -621,7 +697,7 @@
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 class="text-2xl font-bold text-white">Today's Execution</h1>
-              <p id="todayViewDateSub" class="text-xs text-slate-400 mt-0.5">Chủ nhật, 18 Tháng 10, 2026</p>
+              <p id="todayViewDateSub" class="text-xs text-slate-400 mt-0.5">Sunday, October 18, 2026</p>
             </div>
             <div class="flex items-center gap-2">
               <button id="btnTodaySpreadAcross" type="button" class="sf-btn-secondary px-3.5 py-2 text-xs text-amber-300 border-amber-500/30 flex items-center gap-1.5">
@@ -662,7 +738,7 @@
                 <div id="todayExecTimeLogged" class="text-2xl font-extrabold font-mono text-white">0h 0m</div>
                 <div id="todayExecTimeTarget" class="text-xs text-slate-400 mt-0.5">of 2h 0m planned</div>
                 <div class="w-full h-1.5 bg-[#141f2d] rounded-full overflow-hidden mt-3">
-                  <div id="todayExecTimeBar" class="h-full bg-[#22d3ee] transition-all" style="width: 0%"></div>
+                  <div id="todayExecTimeBar" class="h-full bg-[#22d3ee] transition-[width] duration-500" style="width: 0%"></div>
                 </div>
               </div>
               <button id="btnTodayQuickLog" type="button" class="sf-btn-secondary w-full py-1.5 text-xs">
@@ -674,7 +750,7 @@
             <div class="sf-card p-5 flex flex-col justify-between">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-                  <span class="text-[#22d3ee]">◎</span> Pomodoro Timer
+                  <i class="fa-pixel fa-regular fa-bullseye text-[#22d3ee]"></i> Pomodoro Timer
                 </span>
                 <button id="btnTodayOpenFullTimer" type="button" class="text-[11px] text-[#22d3ee] hover:underline">Full Timer →</button>
               </div>
@@ -695,32 +771,36 @@
               <span class="font-bold text-[#22d3ee] uppercase tracking-wider">Create Study Task</span>
               <button id="btnCloseTodayAddTask" type="button" class="text-slate-400 hover:text-white">✕</button>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
               <div>
-                <label for="planSubjSelect" class="block text-slate-400 mb-1">Môn học</label>
+                <label for="planSubjSelect" class="block text-slate-400 mb-1">Subject</label>
                 <select id="planSubjSelect" class="sf-input w-full px-2.5 py-1.5"></select>
               </div>
               <div>
-                <label for="planTopicInput" class="block text-slate-400 mb-1">Chủ đề (Topic)</label>
-                <input id="planTopicInput" type="text" placeholder="VD: Dijkstra & Shortest Path" class="sf-input w-full px-2.5 py-1.5" />
+                <label for="planTopicInput" class="block text-slate-400 mb-1">Topic</label>
+                <input id="planTopicInput" type="text" placeholder="Dijkstra & Shortest Path" class="sf-input w-full px-2.5 py-1.5" />
               </div>
               <div>
-                <label for="planGoalInput" class="block text-slate-400 mb-1">Mục tiêu cụ thể (Goal)</label>
-                <input id="planGoalInput" type="text" placeholder="VD: Giải 2 bài đồ thị" class="sf-input w-full px-2.5 py-1.5" />
+                <label for="planGoalInput" class="block text-slate-400 mb-1">Goal</label>
+                <input id="planGoalInput" type="text" placeholder="Solve two graph problems" class="sf-input w-full px-2.5 py-1.5" />
               </div>
               <div class="grid grid-cols-2 gap-2">
                 <div>
-                  <label for="planDateInput" class="block text-slate-400 mb-1">Ngày</label>
+                  <label for="planDateInput" class="block text-slate-400 mb-1">Date</label>
                   <input id="planDateInput" type="date" class="sf-input w-full px-2 py-1.5 font-mono" />
                 </div>
                 <div>
-                  <label for="planMinutesInput" class="block text-slate-400 mb-1">Phút</label>
+                  <label for="planMinutesInput" class="block text-slate-400 mb-1">Minutes</label>
                   <input id="planMinutesInput" type="number" min="15" max="180" step="5" value="50" class="sf-input w-full px-2 py-1.5 font-mono" />
                 </div>
               </div>
+              <div>
+                <label for="planResourceSelect" class="block text-slate-400 mb-1">Resource</label>
+                <select id="planResourceSelect" class="sf-input w-full px-2.5 py-1.5"><option value="">No resource</option></select>
+              </div>
             </div>
             <div class="flex justify-end">
-              <button id="btnSavePlannedTask" type="button" class="sf-btn-primary px-4 py-1.5 text-xs">Lưu vào Kế hoạch</button>
+              <button id="btnSavePlannedTask" type="button" class="sf-btn-primary px-4 py-1.5 text-xs">Save task</button>
             </div>
           </div>
 
@@ -729,7 +809,7 @@
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 class="text-base font-bold text-white">Today's & Overdue Tasks</h2>
-                <p id="endOfDaySuggestionText" class="text-xs text-slate-400 mt-0.5">Nhấn ▶ Nạp vào Timer để bắt đầu phiên học có mục tiêu (Session Intelligence)</p>
+                <p id="endOfDaySuggestionText" class="text-xs text-slate-400 mt-0.5">Press ▶ Load into Timer to start a goal-focused session.</p>
               </div>
               <div class="flex items-center gap-1.5 text-xs">
                 <button id="planFilterAll" type="button" class="px-3 py-1 rounded-lg bg-[#0d2833] text-[#22d3ee] border border-[#164e63] font-semibold">All</button>
@@ -750,8 +830,8 @@
               <p class="text-xs text-slate-400 mt-0.5">View and manage your study schedule across weeks and months</p>
             </div>
             <div class="flex items-center gap-1.5 bg-[#0b1017] p-1 rounded-xl border border-[#151f2c] text-xs">
-              <button id="calBtnWeekView" type="button" class="px-3 py-1.5 rounded-lg font-semibold bg-[#1cc5dc] text-slate-950 transition">📅 Week</button>
-              <button id="calBtnMonthView" type="button" class="px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition">🗓️ Month</button>
+              <button id="calBtnWeekView" type="button" class="px-3 py-1.5 rounded-lg font-semibold bg-[#1cc5dc] text-slate-950 transition"><i class="fa-pixel fa-regular fa-calendar mr-1"></i>Week</button>
+              <button id="calBtnMonthView" type="button" class="px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition"><i class="fa-pixel fa-regular fa-calendar-days mr-1"></i>Month</button>
             </div>
           </div>
 
@@ -783,22 +863,22 @@
           <!-- 4 KPI Cards (Matches Tflow Screenshot 6) -->
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="sf-card p-4">
-              <div class="text-[11px] font-semibold uppercase text-slate-400">MỤC TIÊU CHÍNH</div>
-              <div id="mpExamName" class="text-lg font-extrabold text-[#22d3ee] mt-1 truncate">Chưa đặt mục tiêu</div>
-              <div class="text-[11px] text-slate-500 mt-0.5">Tên và ngày mục tiêu trong Planning Setup</div>
+              <div class="text-[11px] font-semibold uppercase text-slate-400">MAIN GOAL</div>
+              <div id="mpExamName" class="text-lg font-extrabold text-[#22d3ee] mt-1 truncate">No goal set</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Name and date are set in Planning Setup</div>
             </div>
             <div class="sf-card p-4">
-              <div class="text-[11px] font-semibold uppercase text-slate-400">NGÀY CÒN LẠI</div>
+              <div class="text-[11px] font-semibold uppercase text-slate-400">DAYS REMAINING</div>
               <div id="mpDaysLeft" class="text-2xl font-extrabold text-white font-mono mt-1">—</div>
-              <div id="mpExamDateSub" class="text-[11px] text-slate-500 mt-0.5">Chưa đặt ngày</div>
+              <div id="mpExamDateSub" class="text-[11px] text-slate-500 mt-0.5">No date set</div>
             </div>
             <div class="sf-card p-4">
-              <div class="text-[11px] font-semibold uppercase text-slate-400">GIAI ĐOẠN</div>
+              <div class="text-[11px] font-semibold uppercase text-slate-400">PHASE</div>
               <div id="mpPhaseTitle" class="text-lg font-extrabold text-amber-400 mt-1">Foundation</div>
-              <div class="text-[11px] text-slate-500 mt-0.5">Có thể chỉnh trong Planning Setup</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Edit in Planning Setup</div>
             </div>
             <div class="sf-card p-4">
-              <div class="text-[11px] font-semibold uppercase text-slate-400">THỜI GIAN RẢNH / TUẦN</div>
+              <div class="text-[11px] font-semibold uppercase text-slate-400">WEEKLY CAPACITY</div>
               <div id="mpWeeklyCap" class="text-2xl font-extrabold text-white font-mono mt-1">14.5h</div>
               <div class="text-[11px] text-slate-500 mt-0.5">configured availability</div>
             </div>
@@ -807,35 +887,37 @@
           <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
             <div class="sf-card p-5 space-y-3">
               <div>
-                <h2 class="text-sm font-bold text-white">Kế hoạch học (Plans)</h2>
-                <p class="text-xs text-slate-400 mt-1">Tự thêm chủ đề, môn học, thời lượng và ngày dự định.</p>
+                <h2 class="text-sm font-bold text-white">Study plans</h2>
+                <p class="text-xs text-slate-400 mt-1">Add a topic, subject, duration, and planned date.</p>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input id="mpPlanTitleInput" type="text" placeholder="Tên kế hoạch / chủ đề" class="sf-input px-3 py-2 text-xs" />
+                <input id="mpPlanTitleInput" type="text" placeholder="Plan or topic name" class="sf-input px-3 py-2 text-xs" />
                 <select id="mpPlanSubjectSelect" class="sf-input px-3 py-2 text-xs"></select>
-                <input id="mpPlanGoalInput" type="text" placeholder="Mô tả hoặc kết quả mong muốn" class="sf-input px-3 py-2 text-xs sm:col-span-2" />
+                <input id="mpPlanGoalInput" type="text" placeholder="Description or intended outcome" class="sf-input px-3 py-2 text-xs sm:col-span-2" />
                 <input id="mpPlanDateInput" type="date" class="sf-input px-3 py-2 text-xs font-mono" />
-                <input id="mpPlanMinutesInput" type="number" min="5" step="5" value="50" placeholder="Phút dự kiến" class="sf-input px-3 py-2 text-xs font-mono" />
+                <input id="mpPlanMinutesInput" type="number" min="5" step="5" value="50" placeholder="Estimated minutes" class="sf-input px-3 py-2 text-xs font-mono" />
+                <select id="mpPlanResourceSelect" class="sf-input px-3 py-2 text-xs"><option value="">No resource</option></select>
               </div>
-              <div class="flex justify-end"><button id="btnMpAddPlan" type="button" class="sf-btn-primary px-3 py-2 text-xs">+ Thêm Plan</button></div>
+              <div class="flex justify-end"><button id="btnMpAddPlan" type="button" class="sf-btn-primary px-3 py-2 text-xs">+ Add plan</button></div>
               <div id="mpPlansList" class="space-y-2"></div>
             </div>
             <div class="sf-card p-5 space-y-3">
               <div>
-                <h2 class="text-sm font-bold text-white">Mục tiêu (Targets)</h2>
-                <p class="text-xs text-slate-400 mt-1">Đặt đích về số phiên, thời gian hoặc sản lượng học tập.</p>
+                <h2 class="text-sm font-bold text-white">Targets</h2>
+                <p class="text-xs text-slate-400 mt-1">Set a target for sessions, time, or study output.</p>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input id="mpTargetTitleInput" type="text" placeholder="Tên mục tiêu" class="sf-input px-3 py-2 text-xs" />
+                <input id="mpTargetTitleInput" type="text" placeholder="Target name" class="sf-input px-3 py-2 text-xs" />
                 <select id="mpTargetSubjectSelect" class="sf-input px-3 py-2 text-xs"></select>
                 <select id="mpTargetTypeSelect" class="sf-input px-3 py-2 text-xs">
-                  <option value="output">Sản lượng</option><option value="sessions">Số phiên</option><option value="minutes">Thời gian (phút)</option>
+                  <option value="output">Output</option><option value="sessions">Sessions</option><option value="minutes">Time (minutes)</option>
                 </select>
-                <input id="mpTargetValueInput" type="number" min="1" step="1" value="10" placeholder="Giá trị cần đạt" class="sf-input px-3 py-2 text-xs font-mono" />
-                <input id="mpTargetUnitInput" type="text" value="bài" placeholder="Đơn vị" class="sf-input px-3 py-2 text-xs" />
+                <input id="mpTargetValueInput" type="number" min="1" step="1" value="10" placeholder="Target value" class="sf-input px-3 py-2 text-xs font-mono" />
+                <input id="mpTargetUnitInput" type="text" value="items" placeholder="Unit (items, chapters...)" class="sf-input px-3 py-2 text-xs" />
                 <input id="mpTargetDeadlineInput" type="date" class="sf-input px-3 py-2 text-xs font-mono" />
+                <select id="mpTargetResourceSelect" class="sf-input px-3 py-2 text-xs"><option value="">No resource</option></select>
               </div>
-              <div class="flex justify-end"><button id="btnMpAddTarget" type="button" class="sf-btn-primary px-3 py-2 text-xs">+ Thêm Target</button></div>
+              <div class="flex justify-end"><button id="btnMpAddTarget" type="button" class="sf-btn-primary px-3 py-2 text-xs">+ Add target</button></div>
               <div id="mpTargetsList" class="space-y-2"></div>
             </div>
           </div>
@@ -908,7 +990,7 @@
               <button id="btnStartPause" type="button" class="w-16 h-16 rounded-full bg-[#1cc5dc] hover:bg-[#38d9ed] text-slate-950 flex items-center justify-center text-xl font-bold shadow-lg shadow-cyan-500/20 transition" title="Start / Pause">
                 <span id="startPauseIcon">▶</span>
               </button>
-              <button id="btnQuickComplete" type="button" class="w-11 h-11 rounded-full sf-btn-secondary flex items-center justify-center text-sm text-[#22d3ee]" title="Hoàn thành sớm & Ghi nhận Session Intelligence">
+              <button id="btnQuickComplete" type="button" class="w-11 h-11 rounded-full sf-btn-secondary flex items-center justify-center text-sm text-[#22d3ee]" title="Finish early and log the session">
                 ✓
               </button>
               <button id="btnOpenBreathingModal" type="button" class="w-11 h-11 rounded-full sf-btn-secondary flex items-center justify-center text-sm" title="NSDR & Box Breathing 4-4-4-4">
@@ -916,17 +998,17 @@
               </button>
             </div>
             <div class="text-center">
-              <span id="startPauseText" class="text-xs text-slate-400">Nhấn nút ▶ để bắt đầu phiên tập trung</span>
+              <span id="startPauseText" class="text-xs text-slate-400">Press ▶ to start a focus session</span>
             </div>
 
             <!-- Session Intelligence Pre-Session Card (Multi-Subject + Topic + Goal) -->
             <div class="sf-card p-5 space-y-4">
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 class="text-xs font-bold uppercase tracking-wider text-[#22d3ee]">Session Intelligence — Môn học & Mục tiêu Phiên này</h2>
-                  <p class="text-[11px] text-slate-400">Chọn 1 hoặc nhiều môn học trong cùng 1 Pomodoro và đặt mục tiêu đầu ra rõ ràng</p>
+                  <h2 class="text-xs font-bold uppercase tracking-wider text-[#22d3ee]">Session Intelligence — Subject & session goal</h2>
+                  <p class="text-[11px] text-slate-400">Choose one or more subjects and define a measurable outcome.</p>
                 </div>
-                <button id="btnTimerAddSubjectQuick" type="button" class="text-xs text-[#22d3ee] hover:underline">+ Quản lý môn học</button>
+                <button id="btnTimerAddSubjectQuick" type="button" class="text-xs text-[#22d3ee] hover:underline">+ Manage subjects</button>
               </div>
 
               <!-- Multi-Subject Chips -->
@@ -934,35 +1016,34 @@
 
               <!-- Active Selected Preview -->
               <div class="flex flex-wrap items-center gap-1.5 text-xs">
-                <span class="text-slate-400">Đang chọn:</span>
+                <span class="text-slate-400">Selected:</span>
                 <div id="activeSubjectsPreview" class="flex flex-wrap gap-1.5"></div>
                 <span id="activePlanLinkedBadge" class="hidden ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#0c2631] text-[#22d3ee] border border-[#164e63]">🔗 Linked to Today's Plan</span>
               </div>
 
               <!-- Topic, Target Output & Goal Inputs -->
               <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs">
-                <div class="sm:col-span-5">
-                  <label for="sessionTopicInput" class="block text-slate-400 mb-1">Chủ đề (Topic)</label>
-        <input id="sessionTopicInput" type="text" placeholder="Tên chủ đề học" class="sf-input w-full px-3 py-2 text-xs" />
+                <div class="sm:col-span-4">
+                  <label for="sessionTopicInput" class="block text-slate-400 mb-1">Topic</label>
+        <input id="sessionTopicInput" type="text" placeholder="Study topic" class="sf-input w-full px-3 py-2 text-xs" />
                 </div>
-                <div class="sm:col-span-3">
-                  <label for="sessionTargetCountInput" class="block text-slate-400 mb-1">Sản lượng đích</label>
+                <div class="sm:col-span-2">
+                  <label for="sessionTargetCountInput" class="block text-slate-400 mb-1">Output target</label>
                   <input id="sessionTargetCountInput" type="number" min="1" max="500" value="2" class="sf-input w-full px-3 py-2 text-xs font-mono" />
                 </div>
                 <div class="sm:col-span-4">
-                  <label for="sessionTargetUnitSelect" class="block text-slate-400 mb-1">Đơn vị đo</label>
-                  <select id="sessionTargetUnitSelect" class="sf-input w-full px-3 py-2 text-xs">
-                    <option value="bài">bài tập (Problems)</option>
-                    <option value="chương">chương sách (Chapters)</option>
-                    <option value="đề">đề luyện (Mock Sets)</option>
-                    <option value="trang">trang (Pages)</option>
-                  </select>
+                  <label for="sessionTargetUnitSelect" class="block text-slate-400 mb-1">Output unit</label>
+                  <input id="sessionTargetUnitSelect" type="text" value="items" list="unitSuggestions" placeholder="chapters, words, problems..." class="sf-input w-full px-3 py-2 text-xs" />
+                </div>
+                <div class="sm:col-span-3">
+                  <label for="sessionResourceSelect" class="block text-slate-400 mb-1">Attach resource</label>
+                  <select id="sessionResourceSelect" class="sf-input w-full px-3 py-2 text-xs"><option value="">No resource</option></select>
                 </div>
               </div>
 
               <div class="text-xs">
-                <label for="sessionNoteInput" class="block text-slate-400 mb-1">Mục tiêu cụ thể (Session Goal)</label>
-        <input id="sessionNoteInput" type="text" placeholder="Ví dụ: hoàn thành mục tiêu đã đặt" class="sf-input w-full px-3 py-2 text-xs" />
+                <label for="sessionNoteInput" class="block text-slate-400 mb-1">Session goal</label>
+        <input id="sessionNoteInput" type="text" placeholder="Example: finish the planned outcome" class="sf-input w-full px-3 py-2 text-xs" />
               </div>
             </div>
 
@@ -989,53 +1070,57 @@
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 class="text-2xl font-bold text-white">Tasks & Milestones</h1>
-              <p class="text-xs text-slate-400 mt-0.5">Kết hợp đo lường nỗ lực (Tasks) với đo lường kết quả đầu ra (Goal & Milestone Tracking)</p>
+              <p class="text-xs text-slate-400 mt-0.5">Track effort and measurable outcomes in one place.</p>
             </div>
             <div class="flex items-center gap-2">
-              <button id="btnOpenAddMilestone" type="button" class="sf-btn-primary px-3.5 py-2 text-xs">+ Thêm Cột mốc (Milestone)</button>
+              <button id="btnOpenAddMilestone" type="button" class="sf-btn-primary px-3.5 py-2 text-xs">+ Add milestone</button>
             </div>
           </div>
 
           <!-- Add Milestone Drawer -->
           <div id="addMilestoneDrawer" class="hidden sf-card p-4 space-y-3 text-xs border-[#22d3ee]/40">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-[#22d3ee] uppercase">Tạo Cột Mốc Cụ Thể (Milestone)</span>
+              <span class="font-bold text-[#22d3ee] uppercase">Create a milestone</span>
               <button id="btnCloseMilestoneDrawer" type="button" class="text-slate-400 hover:text-white">✕</button>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="sm:col-span-2">
-                <label for="msTitleInput" class="block text-slate-400 mb-1">Tên cột mốc</label>
-                <input id="msTitleInput" type="text" placeholder="VD: Hoàn thành 15 bài về Đồ thị / Đọc xong 6 chương sách" class="sf-input w-full px-3 py-1.5" />
+                <label for="msTitleInput" class="block text-slate-400 mb-1">Milestone name</label>
+                <input id="msTitleInput" type="text" placeholder="Example: finish 15 problems or 6 chapters" class="sf-input w-full px-3 py-1.5" />
               </div>
               <div>
-                <label for="msSubjSelect" class="block text-slate-400 mb-1">Môn học</label>
+                <label for="msSubjSelect" class="block text-slate-400 mb-1">Subject</label>
                 <select id="msSubjSelect" class="sf-input w-full px-3 py-1.5"></select>
               </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <label for="msTypeSelect" class="block text-slate-400 mb-1">Loại mục tiêu</label>
+                <label for="msTypeSelect" class="block text-slate-400 mb-1">Target type</label>
                 <select id="msTypeSelect" class="sf-input w-full px-2.5 py-1.5">
-                  <option value="output">🎯 Sản lượng (Bài/Chương)</option>
-                  <option value="sessions">🍅 Số phiên (Sessions)</option>
-                  <option value="minutes">⏱️ Thời gian (Phút)</option>
+                  <option value="output">🎯 Output (problems/chapters)</option>
+                  <option value="sessions">🍅 Sessions (Sessions)</option>
+                  <option value="minutes">⏱️ Time (minutes)</option>
                 </select>
               </div>
               <div>
-                <label for="msTargetInput" class="block text-slate-400 mb-1">Đích cần đạt</label>
+                <label for="msTargetInput" class="block text-slate-400 mb-1">Target value</label>
                 <input id="msTargetInput" type="number" min="1" max="5000" value="15" class="sf-input w-full px-2.5 py-1.5 font-mono" />
               </div>
               <div>
-                <label for="msUnitInput" class="block text-slate-400 mb-1">Đơn vị</label>
-                <input id="msUnitInput" type="text" value="bài" class="sf-input w-full px-2.5 py-1.5" />
+                <label for="msUnitInput" class="block text-slate-400 mb-1">Unit</label>
+                  <input id="msUnitInput" type="text" value="items" placeholder="Unit" class="sf-input w-full px-2.5 py-1.5" />
               </div>
               <div>
-                <label for="msDeadlineInput" class="block text-slate-400 mb-1">Hạn chót</label>
+                <label for="msDeadlineInput" class="block text-slate-400 mb-1">Deadline</label>
                 <input id="msDeadlineInput" type="date" class="sf-input w-full px-2.5 py-1.5 font-mono" />
+              </div>
+              <div>
+                <label for="msResourceSelect" class="block text-slate-400 mb-1">Linked resource</label>
+                <select id="msResourceSelect" class="sf-input w-full px-2.5 py-1.5"><option value="">No resource</option></select>
               </div>
             </div>
             <div class="flex justify-end">
-              <button id="btnSaveMilestone" type="button" class="sf-btn-primary px-4 py-1.5 text-xs">Lưu Cột Mốc</button>
+              <button id="btnSaveMilestone" type="button" class="sf-btn-primary px-4 py-1.5 text-xs">Save milestone</button>
             </div>
           </div>
 
@@ -1043,10 +1128,10 @@
             <!-- Milestones Column (6 cols) -->
             <div class="lg:col-span-6 sf-card p-5 space-y-3">
               <h2 class="text-sm font-bold text-white flex items-center gap-2">
-                <span class="text-[#22d3ee]">🏆</span>
+                <i class="fa-pixel fa-regular fa-trophy text-[#22d3ee]"></i>
                 <span>Goal & Milestone Tracking</span>
               </h2>
-              <p class="text-xs text-slate-400">Tự động cộng dồn tiến độ khi bạn hoàn thành phiên Pomodoro của môn tương ứng.</p>
+              <p class="text-xs text-slate-400">Progress updates when you complete a focus session for the matching subject.</p>
               <div id="milestonesListContainer" class="space-y-3"></div>
             </div>
 
@@ -1054,34 +1139,28 @@
             <div class="lg:col-span-6 sf-card p-5 space-y-3">
               <div class="flex items-center justify-between">
                 <div>
-                  <h2 class="text-sm font-bold text-white flex items-center gap-2">
-                    <span class="text-[#22d3ee]">📚</span>
-                    <span>Multi-Resource Tracker (QBank, Sách, Anki)</span>
-                  </h2>
-                  <p class="text-xs text-slate-400">Quản lý tập trung tất cả nguồn tài liệu học tập</p>
+                  <h2 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-pixel fa-regular fa-file-lines text-[#22d3ee]"></i><span>Resource library</span></h2>
+                  <p class="text-xs text-slate-400">Upload a document, define its unit, and track completion.</p>
                 </div>
-                <button id="btnOpenAddResource" type="button" class="sf-btn-secondary px-3 py-1 text-xs">+ Thêm Nguồn</button>
+                <button id="btnOpenAddResource" type="button" class="sf-btn-secondary px-3 py-1 text-xs">+ Add resource</button>
               </div>
 
-              <!-- Add Resource Drawer -->
               <div id="addResourceDrawer" class="hidden sf-inner p-3 space-y-2.5 text-xs">
-                <div class="grid grid-cols-2 gap-2">
-                  <input id="resNameInput" type="text" placeholder="Tên: Codeforces / Cam 18..." class="sf-input px-2.5 py-1.5" />
-                  <select id="resTypeSelect" class="sf-input px-2.5 py-1.5">
-                    <option value="QBank">🧩 QBank / Bài tập</option>
-                    <option value="Book">📖 Sách / Giáo trình</option>
-                    <option value="Anki">🃏 Anki / Flashcards</option>
-                    <option value="Video">🎬 Khóa học Video</option>
-                  </select>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input id="resNameInput" type="text" placeholder="Resource name" class="sf-input px-2.5 py-1.5" />
+                  <input id="resTypeInput" type="text" placeholder="Type (book, course, QBank...)" class="sf-input px-2.5 py-1.5" />
                 </div>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
                   <select id="resSubjSelect" class="sf-input px-2 py-1.5"></select>
-                  <input id="resTotalInput" type="number" min="1" value="100" placeholder="Tổng số bài" class="sf-input px-2 py-1.5 font-mono" />
-                  <input id="resAccuracyInput" type="number" min="0" max="100" value="80" placeholder="% Chính xác" class="sf-input px-2 py-1.5 font-mono" />
+                  <input id="resTotalInput" type="number" min="1" value="100" placeholder="Total" class="sf-input px-2.5 py-1.5 font-mono" />
+                  <input id="resCompletedInput" type="number" min="0" value="0" placeholder="Completed" class="sf-input px-2.5 py-1.5 font-mono" />
+                  <input id="resUnitInput" type="text" value="items" placeholder="Unit (chapters, words...)" class="sf-input px-2.5 py-1.5" />
+                  <input id="resFileInput" type="file" accept=".pdf,.txt,.md,.csv,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*" class="sf-input w-full px-2 py-1.5 text-[11px] sm:col-span-2" />
                 </div>
+                <div id="resourceUploadStatus" class="text-[11px] text-slate-500 min-h-[16px]"></div>
                 <div class="flex justify-end gap-2">
-                  <button id="btnCancelResource" type="button" class="sf-btn-secondary px-2.5 py-1">Hủy</button>
-                  <button id="btnSaveResource" type="button" class="sf-btn-primary px-3 py-1">Lưu</button>
+                  <button id="btnCancelResource" type="button" class="sf-btn-secondary px-2.5 py-1">Cancel</button>
+                  <button id="btnSaveResource" type="button" class="sf-btn-primary px-3 py-1">Save resource</button>
                 </div>
               </div>
 
@@ -1093,16 +1172,16 @@
         <!-- ==================== VIEW 7: ASSESSMENTS, WEAK AREAS & NEUROSCIENCE ==================== -->
         <section id="view-ranking" class="sf-view hidden space-y-6">
           <div>
-            <h1 class="text-2xl font-bold text-white">Học bá Ranking</h1>
-            <p class="text-xs text-slate-400 mt-0.5">XP được tính bằng tổng số giờ học đã ghi nhận trong các phiên học.</p>
+            <h1 class="text-2xl font-bold text-white">Study rank</h1>
+            <p class="text-xs text-slate-400 mt-0.5">XP is based on total study time recorded in sessions.</p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="sf-card p-4"><div class="text-xs text-slate-400">Rank hiện tại</div><div id="rankingCurrentName" class="text-xl font-extrabold mt-1">Newbie</div></div>
-            <div class="sf-card p-4"><div class="text-xs text-slate-400">Tổng số giờ đã học</div><div id="rankingCurrentHours" class="text-xl font-extrabold font-mono text-white mt-1">0.0 giờ</div></div>
-            <div class="sf-card p-4"><div class="text-xs text-slate-400">Còn đến rank tiếp theo</div><div id="rankingHoursToNext" class="text-sm font-bold text-[#22d3ee] mt-2">Còn 50 giờ · Pupil</div></div>
+            <div class="sf-card p-4"><div class="text-xs text-slate-400">Current rank</div><div id="rankingCurrentName" class="text-xl font-extrabold mt-1">Newbie</div></div>
+            <div class="sf-card p-4"><div class="text-xs text-slate-400">Total study hours</div><div id="rankingCurrentHours" class="text-xl font-extrabold font-mono text-white mt-1">0.0 hours</div></div>
+            <div class="sf-card p-4"><div class="text-xs text-slate-400">Next rank</div><div id="rankingHoursToNext" class="text-sm font-bold text-[#22d3ee] mt-2">50h to Pupil</div></div>
           </div>
           <div class="sf-card p-5 space-y-3">
-            <h2 class="text-sm font-bold text-white">Các bậc Học bá</h2>
+            <h2 class="text-sm font-bold text-white">Rank ladder</h2>
             <div id="rankingList" class="space-y-1.5"></div>
           </div>
         </section>
@@ -1110,7 +1189,7 @@
         <section id="view-assessments" class="sf-view hidden space-y-6">
           <div>
             <h1 class="text-2xl font-bold text-white">Assessments, Weak Areas & Brain Science</h1>
-            <p class="text-xs text-slate-400 mt-0.5">Theo dõi kỳ thi thử, khắc phục điểm yếu, ôn tập ngắt quãng Ebbinghaus & thưởng Dopamine RPE</p>
+            <p class="text-xs text-slate-400 mt-0.5">Track checkpoints, weak areas, spaced review, and variable rewards.</p>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1121,20 +1200,20 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <h2 class="text-sm font-bold text-white">🔁 Spaced Repetition Queue (Ebbinghaus +1, +3, +7, +14, +30d)</h2>
-                    <p class="text-xs text-slate-400">Chủ động gợi nhớ (Active Recall) trước khi não bộ quên kiến thức</p>
+                    <p class="text-xs text-slate-400">Recall key ideas before they fade.</p>
                   </div>
-                  <button id="btnAddSpacedCard" type="button" class="sf-btn-primary px-3 py-1.5 text-xs">+ Thêm thẻ ôn</button>
+                  <button id="btnAddSpacedCard" type="button" class="sf-btn-primary px-3 py-1.5 text-xs">+ Add review card</button>
                 </div>
 
                 <div id="addSpacedDrawer" class="hidden sf-inner p-3.5 space-y-2.5 text-xs">
                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <input id="srTopicInput" type="text" placeholder="Chủ đề / Định lý vừa học..." class="sf-input sm:col-span-2 px-2.5 py-1.5" />
+                    <input id="srTopicInput" type="text" placeholder="Topic or theorem just studied..." class="sf-input sm:col-span-2 px-2.5 py-1.5" />
                     <select id="srSubjectSelect" class="sf-input px-2.5 py-1.5"></select>
                   </div>
-                  <input id="srQuestionInput" type="text" placeholder="Câu hỏi Active Recall tự kiểm tra..." class="sf-input w-full px-2.5 py-1.5" />
+                  <input id="srQuestionInput" type="text" placeholder="Active Recall prompt..." class="sf-input w-full px-2.5 py-1.5" />
                   <div class="flex justify-end gap-2">
-                    <button id="btnCancelSpaced" type="button" class="sf-btn-secondary px-3 py-1">Hủy</button>
-                    <button id="btnSaveSpaced" type="button" class="sf-btn-primary px-3 py-1">Lưu thẻ</button>
+                    <button id="btnCancelSpaced" type="button" class="sf-btn-secondary px-3 py-1">Cancel</button>
+                    <button id="btnSaveSpaced" type="button" class="sf-btn-primary px-3 py-1">Save card</button>
                   </div>
                 </div>
 
@@ -1146,21 +1225,21 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <h2 class="text-sm font-bold text-white">🔍 Weak-Area Identification & Remediation</h2>
-                    <p class="text-xs text-slate-400">Các chủ đề con bị kẹt hoặc nắm vững thấp — nhấn Khắc phục để đẩy vào lịch học hôm nay</p>
+                    <p class="text-xs text-slate-400">Flag low-confidence topics and schedule a recovery block.</p>
                   </div>
-                  <button id="btnOpenAddWeakArea" type="button" class="sf-btn-secondary px-3 py-1.5 text-xs">+ Ghi Điểm Yếu</button>
+                  <button id="btnOpenAddWeakArea" type="button" class="sf-btn-secondary px-3 py-1.5 text-xs">+ Add weak area</button>
                 </div>
 
                 <div id="addWeakAreaDrawer" class="hidden sf-inner p-3 space-y-2.5 text-xs">
-                  <input id="weakSubtopicInput" type="text" placeholder="Chủ đề con bị yếu (VD: Đồ thị có chu trình âm)" class="sf-input w-full px-2.5 py-1.5" />
+                  <input id="weakSubtopicInput" type="text" placeholder="Weak subtopic (example: negative-cycle graphs)" class="sf-input w-full px-2.5 py-1.5" />
                   <div class="grid grid-cols-2 gap-2">
                     <select id="weakSubjSelect" class="sf-input px-2.5 py-1.5"></select>
-                    <input id="weakAccuracyInput" type="number" min="0" max="100" value="45" placeholder="% Nắm vững" class="sf-input px-2.5 py-1.5 font-mono" />
+                    <input id="weakAccuracyInput" type="number" min="0" max="100" value="45" placeholder="% Mastery" class="sf-input px-2.5 py-1.5 font-mono" />
                   </div>
-                  <input id="weakActionInput" type="text" placeholder="Hành động khắc phục (VD: Giải lại 3 bài cơ bản)" class="sf-input w-full px-2.5 py-1.5" />
+                  <input id="weakActionInput" type="text" placeholder="Recovery action (example: redo 3 basics)" class="sf-input w-full px-2.5 py-1.5" />
                   <div class="flex justify-end gap-2">
-                    <button id="btnCancelWeakArea" type="button" class="sf-btn-secondary px-3 py-1">Hủy</button>
-                    <button id="btnSaveWeakArea" type="button" class="sf-btn-primary px-3 py-1">Lưu</button>
+                    <button id="btnCancelWeakArea" type="button" class="sf-btn-secondary px-3 py-1">Cancel</button>
+                    <button id="btnSaveWeakArea" type="button" class="sf-btn-primary px-3 py-1">Save</button>
                   </div>
                 </div>
 
@@ -1173,19 +1252,19 @@
               <!-- Assessment Checkpoints -->
               <div class="sf-card p-5 space-y-3">
                 <div class="flex items-center justify-between">
-                  <h2 class="text-sm font-bold text-white">🧪 Assessment Checkpoints (Thi thử)</h2>
-                  <button id="btnOpenAddCheckpoint" type="button" class="sf-btn-secondary px-2.5 py-1 text-xs">+ Thêm mốc</button>
+                  <h2 class="text-sm font-bold text-white">🧪 Assessment checkpoints</h2>
+                  <button id="btnOpenAddCheckpoint" type="button" class="sf-btn-secondary px-2.5 py-1 text-xs">+ Add checkpoint</button>
                 </div>
 
                 <div id="addCheckpointDrawer" class="hidden sf-inner p-3 space-y-2 text-xs">
-                  <input id="cpNameInput" type="text" placeholder="Tên bài thi thử (VD: Mock Contest #2)" class="sf-input w-full px-2.5 py-1.5" />
+                  <input id="cpNameInput" type="text" placeholder="Checkpoint name (example: Mock #2)" class="sf-input w-full px-2.5 py-1.5" />
                   <div class="grid grid-cols-2 gap-2">
                     <input id="cpDateInput" type="date" class="sf-input px-2.5 py-1.5 font-mono" />
-                    <input id="cpScoreInput" type="text" placeholder="Điểm / Mục tiêu (85%)" class="sf-input px-2.5 py-1.5" />
+                    <input id="cpScoreInput" type="text" placeholder="Score or target (85%)" class="sf-input px-2.5 py-1.5" />
                   </div>
                   <div class="flex justify-end gap-2">
-                    <button id="btnCancelCheckpoint" type="button" class="sf-btn-secondary px-2.5 py-1">Hủy</button>
-                    <button id="btnSaveCheckpoint" type="button" class="sf-btn-primary px-3 py-1">Lưu</button>
+                    <button id="btnCancelCheckpoint" type="button" class="sf-btn-secondary px-2.5 py-1">Cancel</button>
+                    <button id="btnSaveCheckpoint" type="button" class="sf-btn-primary px-3 py-1">Save</button>
                   </div>
                 </div>
 
@@ -1194,24 +1273,31 @@
 
               <!-- Dopamine RPE Variable Reward Chest -->
               <div class="sf-card p-5 space-y-3">
-                <div class="flex items-center justify-between">
-                  <h2 class="text-sm font-bold text-white">🎲 Dopamine RPE Reward Chest</h2>
-                  <span id="lootTicketsBadge" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">0 Tickets</span>
+                <div class="flex items-center justify-between gap-3">
+                  <h2 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-pixel fa-regular fa-gift text-amber-300"></i><span>Reward Lab</span></h2>
+                  <span id="lootTicketsBadge" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">0 tickets · 0/4 sessions</span>
                 </div>
-                <p class="text-xs text-slate-400">Mỗi Pomodoro cho 1 vé rút ngẫu nhiên. Bạn tự sửa tên và nội dung phần thưởng; phần thưởng không cộng giờ XP.</p>
-                <div class="sf-inner p-4 text-center space-y-2.5">
-                  <div id="rpeChestEmoji" class="text-4xl select-none transition-transform duration-300">🎁</div>
-                  <div id="rpeResultText" class="text-xs text-slate-300 min-h-[32px] flex items-center justify-center">
-                    Mỗi Pomodoro hoàn thành tặng 1 lượt rút thưởng!
-                  </div>
-                  <button id="btnSpinRpe" type="button" class="sf-btn-primary w-full py-2 text-xs">✨ Mở Hộp Thưởng RPE (1 Ticket)</button>
+                <p class="text-xs text-slate-400">Tune how often you earn a ticket, then set rarity weights for a more surprising reward roll.</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <label class="text-[11px] text-slate-400">Pomodoros per ticket<input id="rewardSessionsPerTicket" type="number" min="1" max="20" class="sf-input w-full mt-1 px-2.5 py-1.5 font-mono" value="4" /></label>
+                  <div class="sf-inner px-2.5 py-1.5 flex items-center justify-center gap-2"><i class="fa-pixel fa-regular fa-shield-halved text-emerald-300"></i><span id="streakFreezeBadge" class="text-xs font-semibold text-emerald-300">0 shields</span></div>
                 </div>
-                <button id="btnToggleRewardsEditor" type="button" class="sf-btn-secondary w-full py-2 text-xs">⚙️ Tùy chỉnh phần thưởng</button>
+                <div id="rpeStage" class="rpe-stage">
+                  <div class="rpe-wheel"></div><span class="rpe-spark"></span><span class="rpe-spark"></span><span class="rpe-spark"></span><span class="rpe-spark"></span><div id="rpeChestEmoji" class="rpe-core text-3xl select-none"><i class="fa-pixel fa-regular fa-gift"></i></div>
+                </div>
+                <div id="rpeResultText" class="text-xs text-slate-300 min-h-[42px] flex items-center justify-center text-center">Complete your configured number of focus sessions to earn a ticket.</div>
+                <button id="btnSpinRpe" type="button" class="sf-btn-primary w-full py-2.5 text-xs"><i class="fa-pixel fa-regular fa-wand-magic-sparkles mr-1"></i> Spin reward</button>
+                <button id="btnToggleRewardsEditor" type="button" class="sf-btn-secondary w-full py-2 text-xs"><i class="fa-pixel fa-regular fa-sliders mr-1"></i> Customize reward pool</button>
                 <div id="rpeRewardsEditor" class="hidden sf-inner p-3 space-y-3">
+                  <div class="sf-inner p-2.5 space-y-2">
+                    <div class="text-[11px] font-semibold text-slate-300">Rarity weights</div>
+                    <div id="rarityWeightsList" class="grid grid-cols-2 gap-2"></div>
+                    <div class="text-[10px] text-slate-500">Higher weight means a more common roll. You control the odds.</div>
+                  </div>
                   <div id="rpeRewardsList" class="space-y-3"></div>
                   <div class="flex flex-wrap justify-end gap-2">
-                    <button id="btnAddRpeReward" type="button" class="sf-btn-secondary px-3 py-1.5 text-xs">+ Thêm phần thưởng</button>
-                    <button id="btnSaveRpeRewards" type="button" class="sf-btn-primary px-3 py-1.5 text-xs">Lưu phần thưởng</button>
+                    <button id="btnAddRpeReward" type="button" class="sf-btn-secondary px-3 py-1.5 text-xs">+ Add reward</button>
+                    <button id="btnSaveRpeRewards" type="button" class="sf-btn-primary px-3 py-1.5 text-xs">Save pool</button>
                   </div>
                 </div>
               </div>
@@ -1224,22 +1310,22 @@
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 class="text-2xl font-bold text-white">Study Sessions</h1>
-              <p class="text-xs text-slate-400 mt-0.5">Nhật ký Study Session Intelligence: phân biệt giờ học thực chất có mục tiêu với giờ chỉ bật đồng hồ</p>
+              <p class="text-xs text-slate-400 mt-0.5">A clear log of focused study, outcomes, and next steps.</p>
             </div>
-            <button id="btnSessionsOpenManual" type="button" class="sf-btn-primary px-3.5 py-2 text-xs">+ Ghi bù Phiên học</button>
+            <button id="btnSessionsOpenManual" type="button" class="sf-btn-primary px-3.5 py-2 text-xs">+ Log past session</button>
           </div>
 
           <div class="sf-card p-5 overflow-x-auto custom-scroll">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="border-b border-[#151f2c] text-slate-400">
-                  <th class="py-2.5 px-3 font-semibold">Ngày & Chế độ</th>
-                  <th class="py-2.5 px-3 font-semibold">Môn học & Chủ đề</th>
-                  <th class="py-2.5 px-3 font-semibold">Mục tiêu ➔ Kết quả thực tế</th>
-                  <th class="py-2.5 px-3 font-semibold">Tập trung & Gián đoạn</th>
-                  <th class="py-2.5 px-3 font-semibold">Bước tiếp theo (Next Step)</th>
-                  <th class="py-2.5 px-3 font-semibold text-right">Thời lượng</th>
-                  <th class="py-2.5 px-3 font-semibold text-right">Xóa</th>
+                  <th class="py-2.5 px-3 font-semibold">Date & mode</th>
+                  <th class="py-2.5 px-3 font-semibold">Subject & topic</th>
+                  <th class="py-2.5 px-3 font-semibold">Goal → actual outcome</th>
+                  <th class="py-2.5 px-3 font-semibold">Focus & interruptions</th>
+                  <th class="py-2.5 px-3 font-semibold">Next step</th>
+                  <th class="py-2.5 px-3 font-semibold text-right">Duration</th>
+                  <th class="py-2.5 px-3 font-semibold text-right">Delete</th>
                 </tr>
               </thead>
               <tbody id="sessionHistoryTableBody" class="divide-y divide-[#151f2c]"></tbody>
@@ -1252,10 +1338,10 @@
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 class="text-2xl font-bold text-white">Planning Setup (Smart Onboarding)</h1>
-              <p class="text-xs text-slate-400 mt-0.5">Thiết lập Kỳ thi, Ngày thi, Giai đoạn học, Quỹ thời gian rảnh từng thứ trong tuần & Ngày nghỉ Blackout</p>
+              <p class="text-xs text-slate-400 mt-0.5">Set your deadline, study phase, weekly capacity, and blackout days.</p>
             </div>
             <button id="btnAutoGenerateWeekPlan" type="button" class="sf-btn-primary px-4 py-2 text-xs">
-              ✨ Tự động Lập Kế hoạch Tuần Này
+              ✨ Auto-plan this week
             </button>
           </div>
 
@@ -1263,47 +1349,47 @@
             <div class="lg:col-span-5 sf-card p-5 space-y-4 text-xs">
               <h2 class="text-sm font-bold text-white">1. Exam & Phase Configuration</h2>
               <div>
-                <label for="onboardExamName" class="block text-slate-400 mb-1">Tên Kỳ thi / Mục tiêu lớn</label>
+                <label for="onboardExamName" class="block text-slate-400 mb-1">Exam or major goal</label>
                 <input id="onboardExamName" type="text" class="sf-input w-full px-3 py-2" />
-                <label for="onboardExamType" class="block text-slate-400 mb-1 mt-3">Loại kỳ thi / mục tiêu (Exam Type)</label>
-                <input id="onboardExamType" type="text" placeholder="VD: Đại học, IELTS, ICPC..." class="sf-input w-full px-3 py-2" />
+                <label for="onboardExamType" class="block text-slate-400 mb-1 mt-3">Exam or goal type</label>
+                <input id="onboardExamType" type="text" placeholder="Example: university, IELTS, ICPC..." class="sf-input w-full px-3 py-2" />
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label for="onboardExamDate" class="block text-slate-400 mb-1">Ngày thi (Exam Date)</label>
+                  <label for="onboardExamDate" class="block text-slate-400 mb-1">Exam date</label>
                   <input id="onboardExamDate" type="date" class="sf-input w-full px-3 py-2 font-mono" />
                 </div>
                 <div>
-                  <label for="onboardPhaseSelect" class="block text-slate-400 mb-1">Giai đoạn (Study Phase)</label>
+                  <label for="onboardPhaseSelect" class="block text-slate-400 mb-1">Study phase</label>
                   <select id="onboardPhaseSelect" class="sf-input w-full px-3 py-2">
-                    <option value="foundation">🌱 Foundation (Nền tảng)</option>
-                    <option value="intensive">⚡ Intensive (Luyện sâu)</option>
-                    <option value="sprint">🔥 Sprint / Mock (Nước rút)</option>
+                    <option value="foundation">🌱 Foundation (Foundation)</option>
+                    <option value="intensive">⚡ Intensive (Intensive)</option>
+                    <option value="sprint">🔥 Sprint / Mock (Sprint)</option>
                   </select>
                 </div>
               </div>
 
               <div class="pt-2 border-t border-[#151f2c]">
-                <label for="onboardBlackoutInput" class="block text-slate-400 mb-1">Thêm Ngày nghỉ cố định (Blackout Days — Không xếp lịch)</label>
+                <label for="onboardBlackoutInput" class="block text-slate-400 mb-1">Add a blackout day (no scheduling)</label>
                 <div class="flex gap-2">
                   <input id="onboardBlackoutInput" type="date" class="sf-input flex-1 px-3 py-1.5 font-mono" />
-                  <button id="btnAddBlackoutDate" type="button" class="sf-btn-secondary px-3 py-1.5">Thêm</button>
+                  <button id="btnAddBlackoutDate" type="button" class="sf-btn-secondary px-3 py-1.5">Add</button>
                 </div>
                 <div id="blackoutDatesList" class="flex flex-wrap gap-1.5 mt-2"></div>
               </div>
 
               <button id="btnSaveOnboarding" type="button" class="sf-btn-primary w-full py-2 text-xs">
-                ✓ Lưu Cấu hình Onboarding
+                ✓ Save planning setup
               </button>
             </div>
 
             <div class="lg:col-span-7 sf-card p-5 space-y-4 text-xs">
               <div class="flex items-center justify-between">
                 <div>
-                  <h2 class="text-sm font-bold text-white">2. Weekly Availability (Phút rảnh mỗi ngày)</h2>
-                  <p class="text-slate-400 mt-0.5">Hệ thống dựa vào hạn mức này để phân bổ lại bài học khi bạn bấm Spread Across</p>
+                  <h2 class="text-sm font-bold text-white">2. Weekly Availability (Available minutes per day)</h2>
+                  <p class="text-slate-400 mt-0.5">Spread Across uses these limits to place study tasks.</p>
                 </div>
-                <span id="weeklyCapacitySummary" class="font-mono font-bold text-[#22d3ee]">850 phút/tuần</span>
+                <span id="weeklyCapacitySummary" class="font-mono font-bold text-[#22d3ee]">850 minutes/week</span>
               </div>
               <div id="availabilityGrid" class="grid grid-cols-7 gap-2.5 text-center pt-2"></div>
             </div>
@@ -1315,49 +1401,49 @@
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 class="text-2xl font-bold text-white">Planned vs Actual Analytics</h1>
-              <p class="text-xs text-slate-400 mt-0.5">Phát hiện sớm sự mất cân đối thời gian giữa các môn học trước khi thành thói quen</p>
+              <p class="text-xs text-slate-400 mt-0.5">Spot subject imbalance before it becomes a habit.</p>
             </div>
             <div class="flex items-center gap-1.5 bg-[#0b1017] p-1 rounded-xl border border-[#151f2c] text-xs">
-              <button id="analyticsRangeDay" type="button" class="px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition">Hôm nay</button>
-              <button id="analyticsRangeWeek" type="button" class="px-3 py-1.5 rounded-lg font-semibold bg-[#1cc5dc] text-slate-950 transition">7 Ngày</button>
-              <button id="analyticsRangeMonth" type="button" class="px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition">30 Ngày</button>
+              <button id="analyticsRangeDay" type="button" class="px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition">Today</button>
+              <button id="analyticsRangeWeek" type="button" class="px-3 py-1.5 rounded-lg font-semibold bg-[#1cc5dc] text-slate-950 transition">7 days</button>
+              <button id="analyticsRangeMonth" type="button" class="px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition">30 days</button>
             </div>
           </div>
 
           <!-- 4 Analytics KPI Cards -->
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="sf-card p-4">
-              <div class="text-xs text-slate-400">Hoàn thành Kế hoạch</div>
+              <div class="text-xs text-slate-400">Plan completion</div>
               <div id="statWeeklyCompletionRate" class="text-2xl font-extrabold text-[#22d3ee] font-mono mt-1">—</div>
-              <div id="statPlannedVsActualMinutesSub" class="text-[11px] text-slate-500 mt-0.5">0 / 0 phút</div>
+              <div id="statPlannedVsActualMinutesSub" class="text-[11px] text-slate-500 mt-0.5">0 / 0 minutes</div>
             </div>
             <div class="sf-card p-4">
-              <div class="text-xs text-slate-400">Phiên Xong / Đã Lên Lịch</div>
+              <div class="text-xs text-slate-400">Done / scheduled</div>
               <div id="statScheduledVsCompleted" class="text-2xl font-extrabold text-white font-mono mt-1">0 / 0</div>
-              <div id="statMissedSessionsSub" class="text-[11px] text-amber-400 mt-0.5">0 phiên trễ</div>
+              <div id="statMissedSessionsSub" class="text-[11px] text-amber-400 mt-0.5">0 overdue sessions</div>
             </div>
             <div class="sf-card p-4">
-              <div class="text-xs text-slate-400">Độ Tập Trung TB</div>
+              <div class="text-xs text-slate-400">Average focus</div>
               <div id="statAvgFocusScore" class="text-2xl font-extrabold text-[#22d3ee] font-mono mt-1">—</div>
-              <div id="statEffectiveHoursSub" class="text-[11px] text-slate-500 mt-0.5">Giờ thực chất: 0.0h</div>
+              <div id="statEffectiveHoursSub" class="text-[11px] text-slate-500 mt-0.5">Effective hours: 0.0h</div>
             </div>
             <div class="sf-card p-4">
-              <div class="text-xs text-slate-400">Cân đối Môn học</div>
-              <div id="statImbalanceAlert" class="text-sm font-extrabold text-amber-400 mt-1.5 truncate">Đang cân đối</div>
-              <div id="statImbalanceSub" class="text-[11px] text-slate-500 mt-0.5">So với kế hoạch</div>
+              <div class="text-xs text-slate-400">Subject balance</div>
+              <div id="statImbalanceAlert" class="text-sm font-extrabold text-amber-400 mt-1.5 truncate">Balanced</div>
+              <div id="statImbalanceSub" class="text-[11px] text-slate-500 mt-0.5">Compared with plan</div>
             </div>
           </div>
 
           <!-- 2 Main Charts -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-6 sf-card p-5">
-              <h3 class="text-sm font-bold text-white mb-3">Planned vs Actual theo Môn học (Phút)</h3>
+              <h3 class="text-sm font-bold text-white mb-3">Planned vs Actual theo Subject (Minutes)</h3>
               <div class="relative h-64">
                 <canvas id="plannedVsActualChartCanvas"></canvas>
               </div>
             </div>
             <div class="lg:col-span-6 sf-card p-5">
-              <div class="flex items-center justify-between gap-2 mb-3"><h3 class="text-sm font-bold text-white">Xu hướng (Thực tế vs Mục tiêu)</h3><select id="analyticsTrendWeeks" class="sf-input px-2 py-1 text-xs"><option value="4">4 tuần</option><option value="8" selected>8 tuần</option><option value="12">12 tuần</option></select></div>
+              <div class="flex items-center justify-between gap-2 mb-3"><h3 class="text-sm font-bold text-white">Trend (Actual vs target)</h3><select id="analyticsTrendWeeks" class="sf-input px-2 py-1 text-xs"><option value="4">4 weeks</option><option value="8" selected>8 weeks</option><option value="12">12 weeks</option></select></div>
               <div class="relative h-64">
                 <canvas id="weeklyTrendChartCanvas"></canvas>
               </div>
@@ -1367,15 +1453,15 @@
           <!-- Subject Balance Table + Doughnut -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-7 sf-card p-5 space-y-3">
-              <h3 class="text-sm font-bold text-white">Bảng Cân đối Thời gian theo Môn & Chủ đề</h3>
+              <h3 class="text-sm font-bold text-white">Time balance by subject and topic</h3>
               <div class="overflow-x-auto custom-scroll">
                 <table class="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr class="border-b border-[#151f2c] text-slate-400">
-                      <th class="py-2 px-2.5">Môn học & Chủ đề</th>
-                      <th class="py-2 px-2.5 text-right">Dự kiến</th>
-                      <th class="py-2 px-2.5 text-right">Thực tế</th>
-                      <th class="py-2 px-2.5 text-right">Chênh lệch</th>
+                      <th class="py-2 px-2.5">Subject & topic</th>
+                      <th class="py-2 px-2.5 text-right">Planned</th>
+                      <th class="py-2 px-2.5 text-right">Actual</th>
+                      <th class="py-2 px-2.5 text-right">Delta</th>
                       <th class="py-2 px-2.5 text-right">Focus TB</th>
                     </tr>
                   </thead>
@@ -1385,11 +1471,11 @@
             </div>
             <div class="lg:col-span-5 sf-card p-5 space-y-4">
               <div>
-                <h3 class="text-sm font-bold text-white mb-2">Tỷ trọng Thực tế theo Môn</h3>
+                <h3 class="text-sm font-bold text-white mb-2">Actual time by subject</h3>
                 <div class="relative h-44"><canvas id="subjectChartCanvas"></canvas></div>
               </div>
               <div>
-                <h3 class="text-sm font-bold text-white mb-2">Nhịp độ 14 Ngày Gần Nhất</h3>
+                <h3 class="text-sm font-bold text-white mb-2">14-day pace</h3>
                 <div class="relative h-36"><canvas id="dailyTrendChartCanvas"></canvas></div>
               </div>
             </div>
@@ -1400,20 +1486,20 @@
         <section id="view-settings" class="sf-view hidden space-y-6">
           <div>
             <h1 class="text-2xl font-bold text-white">Settings & Subjects Manager</h1>
-            <p class="text-xs text-slate-400 mt-0.5">Tùy chỉnh danh sách môn học, icon riêng biệt và sao lưu dữ liệu Local</p>
+            <p class="text-xs text-slate-400 mt-0.5">Customize subjects, icons, colors, and local backups.</p>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- Create New Subject Card -->
             <div class="lg:col-span-6 sf-card p-5 space-y-4 text-xs">
-              <h2 class="text-sm font-bold text-white">📚 Tạo Môn Học Mới (Custom Icon & Color)</h2>
+              <h2 class="text-sm font-bold text-white flex items-center gap-2"><span data-sf-icon="book" class="w-4 h-4 text-[#22d3ee]" aria-label="Reading"></span>Create a subject (custom icon and color)</h2>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label for="newSubjName" class="block text-slate-400 mb-1">Tên môn học</label>
+                  <label for="newSubjName" class="block text-slate-400 mb-1">Subject name</label>
                   <input id="newSubjName" type="text" placeholder="VD: Competitive Programming..." class="sf-input w-full px-3 py-2" />
                 </div>
                 <div>
-                  <label for="newSubjColor" class="block text-slate-400 mb-1">Màu nhận diện</label>
+                  <label for="newSubjColor" class="block text-slate-400 mb-1">Accent color</label>
                   <select id="newSubjColor" class="sf-input w-full px-3 py-2">
                     <option value="#22d3ee">🩵 Tflow Cyan</option>
                     <option value="#10b981">🟢 Emerald Green</option>
@@ -1425,17 +1511,17 @@
                 </div>
               </div>
               <div>
-                <span class="block text-slate-400 mb-1.5">Chọn Icon cho môn học:</span>
+                <span class="block text-slate-400 mb-1.5">Choose a subject icon:</span>
                 <div id="iconPickerGrid" class="flex flex-wrap gap-1.5"></div>
               </div>
               <button id="btnSaveNewSubject" type="button" class="sf-btn-primary w-full py-2 text-xs">
-                + Lưu Môn Học Mới
+                + Save subject
               </button>
             </div>
 
             <!-- Current Subjects List -->
             <div class="lg:col-span-6 sf-card p-5 space-y-3 text-xs">
-              <h2 class="text-sm font-bold text-white">Danh sách Môn học Hiện tại</h2>
+              <h2 class="text-sm font-bold text-white">Current subjects</h2>
               <div id="settingsSubjectsList" class="space-y-2 max-h-72 overflow-y-auto custom-scroll pr-1"></div>
             </div>
           </div>
@@ -1467,20 +1553,20 @@
         </div>
 
         <div class="pt-3 border-t border-[#151f2c] space-y-2.5">
-          <label for="audioPresetSelect" class="block text-slate-300 font-medium">🎧 Sóng não & Âm thanh Tập trung (Web Audio Offline)</label>
+          <label for="audioPresetSelect" class="block text-slate-300 font-medium">🎧 Focus audio (offline Web Audio)</label>
           <select id="audioPresetSelect" class="sf-input w-full px-3 py-2">
-            <option value="off">🔇 Tắt âm thanh nền</option>
-            <option value="gamma40">⚡ Sóng Gamma 40Hz (Tăng tập trung & Acetylcholine)</option>
-            <option value="alpha10">🌊 Sóng Alpha 10Hz (Đọc hiểu & Bình tĩnh)</option>
-            <option value="brown">🪵 Tiếng ồn Nâu (Brown Noise - Chống xao nhãng)</option>
+            <option value="off">🔇 Background audio off</option>
+            <option value="gamma40">⚡ Gamma 40Hz (Focus support)</option>
+            <option value="alpha10">🌊 Alpha 10Hz (Reading and calm)</option>
+            <option value="brown">🪵 Brown noise (block distractions)</option>
           </select>
           <div class="flex items-center justify-between pt-1">
             <label class="flex items-center gap-2 cursor-pointer text-slate-300">
               <input id="chkSoundBell" type="checkbox" checked class="rounded border-slate-700 text-[#22d3ee]" />
-              <span>Chuông báo khi hết phiên</span>
+              <span>Play a bell when a session ends</span>
             </label>
             <div class="flex items-center gap-2">
-              <span class="text-slate-400">Âm lượng:</span>
+              <span class="text-slate-400">Volume:</span>
               <input id="audioVolumeSlider" type="range" min="5" max="100" value="35" class="w-24 accent-[#22d3ee]" />
             </div>
           </div>
@@ -1498,7 +1584,7 @@
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-base font-bold text-white">🎉 Session Intelligence Debrief</h3>
-        <p id="modalCompleteSubtext" class="text-xs text-[#22d3ee] mt-0.5">+50 phút học • +0.8 giờ XP & +1 vé thưởng</p>
+        <p id="modalCompleteSubtext" class="text-xs text-[#22d3ee] mt-0.5">+50 minutes • +0.8 XP hours & reward progress</p>
         </div>
         <button id="btnCloseCompleteModal" type="button" class="text-slate-400 hover:text-white">✕</button>
       </div>
@@ -1506,66 +1592,66 @@
       <div class="space-y-3 text-xs">
         <div class="sf-inner p-3 flex items-center justify-between">
           <div id="modalCompleteSubjectsList" class="flex flex-wrap gap-1.5"></div>
-          <span id="modalCompleteTopicLabel" class="font-bold text-[#22d3ee]">Chủ đề học tập</span>
+          <span id="modalCompleteTopicLabel" class="font-bold text-[#22d3ee]">Study topic</span>
         </div>
 
         <div>
-          <label for="modalActiveRecallInput" class="block text-slate-200 font-semibold mb-1">Đã làm gì trong phiên này?</label>
-          <textarea id="modalActiveRecallInput" rows="2" placeholder="Một câu ngắn về kết quả hoặc ý chính bạn vừa nắm được" class="sf-input w-full p-2.5 text-xs"></textarea>
+          <label for="modalActiveRecallInput" class="block text-slate-200 font-semibold mb-1">What did you accomplish?</label>
+          <textarea id="modalActiveRecallInput" rows="2" placeholder="A short note about the outcome or key idea" class="sf-input w-full p-2.5 text-xs"></textarea>
         </div>
 
         <details class="sf-inner p-3 group">
           <summary class="cursor-pointer list-none text-xs font-semibold text-slate-300 flex items-center justify-between">
-            <span>Thêm sản lượng (không bắt buộc)</span><span class="text-slate-500 group-open:rotate-180 transition">⌄</span>
+            <span>Add output (optional)</span><span class="text-slate-500 group-open:rotate-180 transition">⌄</span>
           </summary>
           <div class="flex items-center gap-1.5 mt-3">
             <input id="modalActualOutputCount" type="number" min="0" max="500" value="2" class="sf-input w-full px-3 py-2 text-sm font-mono font-bold text-[#22d3ee]" />
-            <span id="modalActualOutputUnit" class="text-slate-400">bài</span>
+            <span id="modalActualOutputUnit" class="text-slate-400">items</span>
           </div>
         </details>
 
         <div>
-          <label for="modalFocusScoreSelect" class="block text-slate-200 font-semibold mb-1">Mức độ tập trung (1–5★)</label>
+          <label for="modalFocusScoreSelect" class="block text-slate-200 font-semibold mb-1">Focus score (1–5★)</label>
           <select id="modalFocusScoreSelect" class="sf-input w-full px-3 py-2">
-            <option value="" selected>Chưa đánh giá phiên học</option>
+            <option value="" selected>Not rated</option>
             <option value="5">⭐⭐⭐⭐⭐ 5/5 — Deep Flow</option>
-            <option value="4">⭐⭐⭐⭐ 4/5 — Tốt</option>
-            <option value="3">⭐⭐⭐ 3/5 — Trung bình</option>
-            <option value="2">⭐⭐ 2/5 — Xao nhãng</option>
-            <option value="1">⭐ 1/5 — Chỉ bật đồng hồ</option>
+            <option value="4">⭐⭐⭐⭐ 4/5 — Good</option>
+            <option value="3">⭐⭐⭐ 3/5 — Average</option>
+            <option value="2">⭐⭐ 2/5 — Distracted</option>
+            <option value="1">⭐ 1/5 — Timer only</option>
           </select>
         </div>
 
         <details class="sf-inner p-3 group">
           <summary class="cursor-pointer list-none text-xs font-semibold text-slate-300 flex items-center justify-between">
-            <span>Thêm chi tiết phiên (không bắt buộc)</span><span class="text-slate-500 group-open:rotate-180 transition">⌄</span>
+            <span>Add session details (optional)</span><span class="text-slate-500 group-open:rotate-180 transition">⌄</span>
           </summary>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
             <div>
-              <label for="modalBlockerSelect" class="block text-slate-200 font-semibold mb-1">Điều gì làm gián đoạn phiên học?</label>
+              <label for="modalBlockerSelect" class="block text-slate-200 font-semibold mb-1">What interrupted the session?</label>
               <select id="modalBlockerSelect" class="sf-input w-full px-3 py-2">
-                <option value="Không gián đoạn" selected>🛡️ Không gián đoạn</option>
-                <option value="Điện thoại / MXH">📱 Điện thoại / Mạng xã hội</option>
-                <option value="Bài khó / Kẹt ý tưởng">🧩 Bài khó / Kẹt ý tưởng (Tự gắn cờ Weak Area)</option>
-                <option value="Mệt mỏi / Buồn ngủ">😴 Mệt mỏi / Quá tải</option>
-                <option value="Tiếng ồn / Việc đột xuất">🔊 Tiếng ồn / Việc đột xuất</option>
+                <option value="No interruptions" selected>🛡️ No interruptions</option>
+                <option value="Phone / social media">📱 Phone / social media</option>
+                <option value="Hard problem / stuck">🧩 Hard problem / stuck (flags a weak area)</option>
+                <option value="Tired / sleepy">😴 Tired / overloaded</option>
+                <option value="Noise / unexpected task">🔊 Noise / unexpected task</option>
               </select>
             </div>
             <div>
-              <label for="modalNextStepInput" class="block text-slate-200 font-semibold mb-1">Bước tiếp theo (tùy chọn)</label>
-              <input id="modalNextStepInput" type="text" placeholder="VD: Làm tiếp bài Shortest Path #3" class="sf-input w-full px-3 py-2" />
+              <label for="modalNextStepInput" class="block text-slate-200 font-semibold mb-1">Next step (optional)</label>
+              <input id="modalNextStepInput" type="text" placeholder="Example: Continue problem Shortest Path #3" class="sf-input w-full px-3 py-2" />
             </div>
           </div>
         </details>
 
         <label class="sf-inner p-2.5 flex items-center gap-2 cursor-pointer">
           <input id="chkAddToSpacedRep" type="checkbox" checked class="rounded border-slate-700 text-[#22d3ee]" />
-          <span class="text-slate-200">Đưa chủ đề này vào lịch <strong>Ôn tập Ngắt quãng Ebbinghaus (+1, +3, +7, +14, +30d)</strong></span>
+          <span class="text-slate-200">Add this topic to spaced review <strong>(+1, +3, +7, +14, +30d)</strong></span>
         </label>
       </div>
 
       <button id="btnSaveCompletedPomodoro" type="button" class="sf-btn-primary w-full py-2.5 text-xs">
-        Lưu vào Heatmap & Nhận thưởng Dopamine
+        Save session and earn reward progress
       </button>
     </div>
   </div>
@@ -1580,43 +1666,43 @@
       <div class="space-y-3 text-xs">
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label for="manualDateInput" class="block text-slate-400 mb-1">Ngày học</label>
+            <label for="manualDateInput" class="block text-slate-400 mb-1">Study date</label>
             <input id="manualDateInput" type="date" class="sf-input w-full px-3 py-2 font-mono" />
           </div>
           <div>
-            <label for="manualMinutesInput" class="block text-slate-400 mb-1">Thời lượng (phút)</label>
+            <label for="manualMinutesInput" class="block text-slate-400 mb-1">Duration (minutes)</label>
             <input id="manualMinutesInput" type="number" min="5" max="240" value="50" class="sf-input w-full px-3 py-2 font-mono" />
           </div>
         </div>
         <div>
-          <span class="block text-slate-400 mb-1">Chọn (các) môn học:</span>
+          <span class="block text-slate-400 mb-1">Choose subject(s):</span>
           <div id="manualSubjectCheckboxes" class="flex flex-wrap gap-1.5"></div>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label for="manualTopicInput" class="block text-slate-400 mb-1">Chủ đề (Topic)</label>
+            <label for="manualTopicInput" class="block text-slate-400 mb-1">Topic</label>
             <input id="manualTopicInput" type="text" placeholder="VD: Dijkstra / DP" class="sf-input w-full px-3 py-2" />
           </div>
           <div>
-            <label for="manualFocusInput" class="block text-slate-400 mb-1">Độ tập trung</label>
+            <label for="manualFocusInput" class="block text-slate-400 mb-1">Focus score</label>
             <select id="manualFocusInput" class="sf-input w-full px-2.5 py-2">
-              <option value="" selected>Chưa đánh giá</option>
-              <option value="5">5 ★ Xuất sắc</option>
-              <option value="4">4 ★ Tốt</option>
-              <option value="3">3 ★ Trung bình</option>
-              <option value="2">2 ★ Xao nhãng</option>
-              <option value="1">1 ★ Thấp</option>
+              <option value="" selected>Not rated</option>
+              <option value="5">5 ★ Excellent</option>
+              <option value="4">4 ★ Good</option>
+              <option value="3">3 ★ Average</option>
+              <option value="2">2 ★ Distracted</option>
+              <option value="1">1 ★ Low</option>
             </select>
           </div>
         </div>
         <div>
-          <label for="manualNoteInput" class="block text-slate-400 mb-1">Kết quả đạt được</label>
-          <input id="manualNoteInput" type="text" placeholder="VD: Giải xong 2 bài đồ thị" class="sf-input w-full px-3 py-2" />
+          <label for="manualNoteInput" class="block text-slate-400 mb-1">Outcome</label>
+          <input id="manualNoteInput" type="text" placeholder="Example: Solve 2 graph problems" class="sf-input w-full px-3 py-2" />
         </div>
       </div>
       <div class="flex justify-end gap-2 pt-2">
-        <button id="btnCancelManualModal" type="button" class="sf-btn-secondary px-4 py-2 text-xs">Hủy</button>
-        <button id="btnSubmitManualLog" type="button" class="sf-btn-primary px-4 py-2 text-xs">Lưu Phiên Học</button>
+        <button id="btnCancelManualModal" type="button" class="sf-btn-secondary px-4 py-2 text-xs">Cancel</button>
+        <button id="btnSubmitManualLog" type="button" class="sf-btn-primary px-4 py-2 text-xs">Save session</button>
       </div>
     </div>
   </div>
@@ -1630,13 +1716,13 @@
       </div>
       <div class="py-6 flex flex-col items-center justify-center">
         <div class="w-32 h-32 rounded-full bg-[#0c2631] border-2 border-[#22d3ee] flex items-center justify-center breathe-circle">
-          <span id="breathingGuideText" class="text-xs font-bold text-[#22d3ee]">Hít vào 4s...</span>
+          <span id="breathingGuideText" class="text-xs font-bold text-[#22d3ee]">Inhale for 4s...</span>
         </div>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
-        Phóng tầm mắt nhìn xa (Panoramic Vision) và thở nhịp 4-4-4-4 để giảm nhịp tim, kích hoạt Hồi hải mã phát lại kiến thức vừa học nhanh gấp 20 lần.
+        Use panoramic vision and 4-4-4-4 breathing to lower arousal before returning to your next block.
       </p>
-      <button id="btnDoneBreathing" type="button" class="sf-btn-primary w-full py-2.5 text-xs">Đã phục hồi xong • Quay lại học</button>
+      <button id="btnDoneBreathing" type="button" class="sf-btn-primary w-full py-2.5 text-xs">Recovered • back to focus</button>
     </div>
   </div>
 
@@ -1648,20 +1734,22 @@
         <button id="btnCloseBackupModal" type="button" class="text-slate-400 hover:text-white">✕</button>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
-        Toàn bộ dữ liệu được lưu tự động trong <code class="text-[#22d3ee]">localStorage</code> trên trình duyệt của bạn. Bạn có thể xuất ra file <code class="text-[#22d3ee]">.json</code> để sao lưu.
+        All data is saved automatically in <code class="text-[#22d3ee]">localStorage</code>  in this browser. You can export a <code class="text-[#22d3ee]">.json</code> backup file.
       </p>
       <div class="grid grid-cols-1 gap-2.5 pt-1 text-xs">
-        <button id="btnExportJson" type="button" class="sf-btn-primary w-full py-2.5">⬇️ Tải xuống File Sao lưu (.json)</button>
+        <button id="btnExportJson" type="button" class="sf-btn-primary w-full py-2.5">⬇️ Download backup (.json)</button>
         <label class="sf-btn-secondary w-full py-2.5 text-center cursor-pointer block">
-          <span>⬆️ Khôi phục từ File (.json)</span>
+          <span>⬆️ Restore from file (.json)</span>
           <input id="inputImportJson" type="file" accept=".json" class="hidden" />
         </label>
         <button id="btnClearAllData" type="button" class="w-full py-2 rounded-xl bg-rose-950/50 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 font-semibold mt-2">
-          🗑️ Reset toàn bộ dữ liệu về mặc định
+          🗑️ Reset all data
         </button>
       </div>
     </div>
   </div>
+
+  <datalist id="unitSuggestions"><option value="items"></option><option value="chapters"></option><option value="pages"></option><option value="words"></option><option value="problems"></option><option value="sessions"></option><option value="minutes"></option></datalist>
 
   <!-- Toast Container -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>

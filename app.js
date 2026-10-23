@@ -3,10 +3,98 @@
 
       // ==================== CONSTANTS & PALETTES ====================
       const STORAGE_KEY = 'stepflow_neurofocus_v3';
-      const AVAILABLE_ICONS = [
-        '🏆', '💻', '📐', '🧠', '🇬🇧', '📚', '✍️', '🔬',
-        '📊', '🎨', '⚛️', '🧬', '🎵', '🏛️', '🌍', '🧮',
-        '⚡', '🤖', '📈', '🧪', '🩺', '⚖️', '🏋️', '🚀'
+
+      // Tflow uses a small local Solar-inspired duotone icon set instead of a
+      // remote font. This keeps the sidebar and subject picker readable offline
+      // and avoids missing-glyph boxes when the Font Awesome CDN is unavailable.
+      const ICON_DEFS = {
+        home: { label: 'Home', body: '<path d="M3.5 10.7 12 3.8l8.5 6.9"/><path d="M5.7 9.7v9.1h12.6V9.7"/><path d="M9.5 18.8v-5h5v5"/>' },
+        target: { label: 'Focus target', body: '<circle cx="12" cy="12" r="7.5" opacity=".22" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="m12 2.5 2 2-2 2-2-2 2-2Z" fill="currentColor" stroke="none" opacity=".7"/>' },
+        calendar: { label: 'Calendar', body: '<rect x="3.5" y="5" width="17" height="15" rx="2.2"/><path d="M7.5 3.5v3M16.5 3.5v3M3.5 9h17"/><path d="M7.5 12.5h.01M12 12.5h.01M16.5 12.5h.01M7.5 16h.01M12 16h.01" stroke-width="2.2"/>' },
+        compass: { label: 'Plan and goals', body: '<circle cx="12" cy="12" r="8.5"/><path d="m15.8 8.2-2.1 5.5-5.5 2.1 2.1-5.5 5.5-2.1Z" fill="currentColor" opacity=".25"/><path d="m15.8 8.2-2.1 5.5-5.5 2.1 2.1-5.5 5.5-2.1Z"/>' },
+        timer: { label: 'Study timer', body: '<circle cx="12" cy="13" r="7.2"/><path d="M12 5.8V3M9.5 3h5M18 7l1.7-1.7M12 9v4l2.7 1.6"/>' },
+        list: { label: 'Milestones and resources', body: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="m7 8 1.2 1.2L10 7.5M12.5 8H17M7 12l1.2 1.2 1.8-1.7M12.5 12H17M7 16l1.2 1.2 1.8-1.7M12.5 16H17"/>' },
+        brain: { label: 'Review and assess', body: '<path d="M9.2 5.2A3.2 3.2 0 0 0 6 8.4c0 .4.1.8.2 1.2A3.3 3.3 0 0 0 7.5 16a3.2 3.2 0 0 0 3 2.1h1.5V6.4a3.2 3.2 0 0 0-2.8-1.2Z"/><path d="M14.8 5.2A3.2 3.2 0 0 1 18 8.4c0 .4-.1.8-.2 1.2A3.3 3.3 0 0 1 16.5 16a3.2 3.2 0 0 1-3 2.1H12V6.4a3.2 3.2 0 0 1 2.8-1.2Z"/><path d="M8.3 11h2M13.7 9h2M8.5 15h1.8M13.7 14h1.8"/>' },
+        chart: { label: 'Analytics', body: '<path d="M4 19.5V4.5M4 19.5h16"/><path d="m7 15 3-3 2.3 1.8L17 8"/><path d="M14.8 8H17v2.2"/>' },
+        file: { label: 'Session history', body: '<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h6"/>' },
+        sliders: { label: 'Planning setup', body: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor" opacity=".35"/><circle cx="15" cy="12" r="2" fill="currentColor" opacity=".35"/><circle cx="11" cy="18" r="2" fill="currentColor" opacity=".35"/>' },
+        user: { label: 'User', body: '<circle cx="12" cy="8" r="3.2"/><path d="M5 19.5a7 7 0 0 1 14 0"/>' },
+        settings: { label: 'Settings', body: '<path d="m9.7 4.1.6-1.1h3.4l.6 1.1 1.3.7 1.2-.2 1.7 2.9-.8 1 .1 1.5 1 .8v3.4l-1 .8-.1 1.5.8 1-1.7 2.9-1.2-.2-1.3.7-.6 1.1h-3.4l-.6-1.1-1.3-.7-1.2.2-1.7-2.9.8-1-.1-1.5-1-.8v-3.4l1-.8.1-1.5-.8-1L7.2 4.6l1.2.2 1.3-.7Z"/><circle cx="12" cy="12" r="3" fill="currentColor" opacity=".28"/><circle cx="12" cy="12" r="3"/>' },
+        play: { label: 'Start', body: '<path d="m8 5 10 7-10 7V5Z" fill="currentColor" opacity=".28"/><path d="m8 5 10 7-10 7V5Z"/>' },
+        fire: { label: 'Streak', body: '<path d="M12.2 21c4 0 6.3-2.6 6.3-6.1 0-3.2-2.1-5.1-4.3-7.9-.3 2.1-1.2 3.1-2.2 3.8.1-3-1.1-5-3.8-7.3.1 3.2-3 5.2-3 9.1C5.2 17.8 8.1 21 12.2 21Z" fill="currentColor" opacity=".24"/><path d="M12.2 21c4 0 6.3-2.6 6.3-6.1 0-3.2-2.1-5.1-4.3-7.9-.3 2.1-1.2 3.1-2.2 3.8.1-3-1.1-5-3.8-7.3.1 3.2-3 5.2-3 9.1C5.2 17.8 8.1 21 12.2 21Z"/><path d="M12.1 21c-1.8-1-2.7-2.5-2.7-4.1 0-1.2.6-2.2 1.7-3.5.6 1.2 1.5 1.9 2.2 2.4.1-1 .4-1.7 1-2.5.6 1 1.1 2.1 1.1 3.4 0 2-1.3 3.6-3.3 4.3Z" fill="currentColor" opacity=".65" stroke="none"/>' },
+        bolt: { label: 'Quick action', body: '<path d="m13.3 2.8-7 10h5.2l-.8 8.4 7-10h-5.2l.8-8.4Z" fill="currentColor" opacity=".25"/><path d="m13.3 2.8-7 10h5.2l-.8 8.4 7-10h-5.2l.8-8.4Z"/>' },
+        headphones: { label: 'Audio', body: '<path d="M4.5 13v-1a7.5 7.5 0 0 1 15 0v1M4.5 13h2.2v5H5.5a1 1 0 0 1-1-1v-4ZM19.5 13h-2.2v5h1.2a1 1 0 0 0 1-1v-4ZM17.3 18c-.8 1.4-2.2 2.2-4.2 2.2h-1"/>' },
+        save: { label: 'Save', body: '<path d="M5 3.5h11l3 3v14H5z"/><path d="M8 3.5v5h7v-5M8.5 20.5v-5h7v5"/>' },
+        shield: { label: 'Protection', body: '<path d="M12 3.5 19 6v5.2c0 4.4-2.6 7.7-7 9.3-4.4-1.6-7-4.9-7-9.3V6l7-2.5Z" fill="currentColor" opacity=".22"/><path d="M12 3.5 19 6v5.2c0 4.4-2.6 7.7-7 9.3-4.4-1.6-7-4.9-7-9.3V6l7-2.5Z"/><path d="m9 12 2 2 4-4"/>' },
+        pin: { label: 'Pinned next step', body: '<path d="m15.5 4 4.5 4.5-2.4 1.1-2.3 4.2-1.4-1.4-4.8 4.8-.8-.8 4.8-4.8-1.4-1.4 4.2-2.3 1.1-2.4Z"/><path d="m9.5 14.5 2 2"/>' },
+        trophy: { label: 'Achievement', body: '<path d="M8 4h8v4.2a4 4 0 0 1-8 0V4Z" fill="currentColor" opacity=".25"/><path d="M8 4h8v4.2a4 4 0 0 1-8 0V4ZM8 6H5.5v1.5A3.5 3.5 0 0 0 9 11M16 6h2.5v1.5A3.5 3.5 0 0 1 15 11M12 12.2v4.2M8.5 20.5h7M10 16.4h4"/>' },
+        warning: { label: 'Warning', body: '<path d="m12 3 9 17H3L12 3Z" fill="currentColor" opacity=".24"/><path d="m12 3 9 17H3L12 3ZM12 9v4M12 16.2v.1"/>' },
+        gift: { label: 'Reward', body: '<path d="M4 10h16v10H4zM3 7h18v3H3zM12 7v13"/><path d="M12 7H8.7a2.2 2.2 0 1 1 2.2-2.2C10.9 6 12 7 12 7ZM12 7h3.3a2.2 2.2 0 1 0-2.2-2.2C13.1 6 12 7 12 7Z" fill="currentColor" opacity=".35"/>' },
+        magic: { label: 'Magic action', body: '<path d="m14 4 6 6-10 10H4v-6L14 4Z" fill="currentColor" opacity=".23"/><path d="m14 4 6 6-10 10H4v-6L14 4ZM6 14l4 4M17 3v3M20 4h-3M4 5v3M6 7H3"/>' },
+        trash: { label: 'Delete', body: '<path d="M5 7h14M10 11v5M14 11v5M8 7l.7-2.5h6.6L16 7M6.5 7l.8 14h9.4l.8-14"/>' },
+        trophySmall: { label: 'Subject achievement', body: '<path d="M8 4h8v4.2a4 4 0 0 1-8 0V4ZM8 6H5.5v1.5A3.5 3.5 0 0 0 9 11M16 6h2.5v1.5A3.5 3.5 0 0 1 15 11M12 12.2v4.2M8.5 20.5h7M10 16.4h4"/>' },
+        code: { label: 'Code', body: '<path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/><path d="m8 7-5 5 5 5M16 7l5 5-5 5" fill="none" opacity=".35"/>' },
+        calculator: { label: 'Calculator', body: '<rect x="5" y="3.5" width="14" height="17" rx="2"/><rect x="8" y="6" width="8" height="3" rx=".6" fill="currentColor" opacity=".28" stroke="none"/><path d="M8 12h2M14 12h2M8 15.5h2M14 15.5h2M8 19h2M14 19h2"/>' },
+        ruler: { label: 'Math', body: '<path d="m5 19 14-14 2 2L7 21H5z" fill="currentColor" opacity=".22"/><path d="m5 19 14-14 2 2L7 21H5zM9 17l-2-2M12 14l-2-2M15 11l-2-2M18 8l-2-2"/>' },
+        language: { label: 'Language', body: '<circle cx="12" cy="12" r="8.5"/><path d="M3.8 10h16.4M3.8 14h16.4M12 3.5c2.1 2.3 3.2 5.1 3.2 8.5S14.1 18.2 12 20.5C9.9 18.2 8.8 15.4 8.8 12S9.9 5.8 12 3.5Z"/>' },
+        book: { label: 'Reading', body: '<path d="M4 5.5a2 2 0 0 1 2-2h5v16H6a2 2 0 0 0-2 2V5.5ZM20 5.5a2 2 0 0 0-2-2h-5v16h5a2 2 0 0 1 2 2V5.5Z"/><path d="M7 7.5h2.5M16.5 7.5H17"/>' },
+        pen: { label: 'Writing', body: '<path d="m4 20 1.2-4.5L15.8 4.9a2.1 2.1 0 0 1 3 3L8.2 18.5 4 20Z" fill="currentColor" opacity=".22"/><path d="m4 20 1.2-4.5L15.8 4.9a2.1 2.1 0 0 1 3 3L8.2 18.5 4 20ZM13.8 6.9l3.3 3.3"/>' },
+        microscope: { label: 'Microscope', body: '<path d="M9 4h3v6H9zM12 7h3.5a3.5 3.5 0 0 1 3.5 3.5V12M9 10l-3 3M6 13h7M4 20h16M8 17h8"/><path d="M7 20a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5" fill="currentColor" opacity=".2"/>' },
+        chartSubject: { label: 'Progress', body: '<path d="M4 19.5V4.5M4 19.5h16"/><rect x="7" y="13" width="2.5" height="4.5" rx=".7" fill="currentColor" opacity=".35" stroke="none"/><rect x="11" y="10" width="2.5" height="7.5" rx=".7" fill="currentColor" opacity=".55" stroke="none"/><rect x="15" y="6.5" width="2.5" height="11" rx=".7" fill="currentColor" opacity=".75" stroke="none"/>' },
+        palette: { label: 'Design', body: '<path d="M12 4.2a7.8 7.8 0 0 0 0 15.6h1.1a1.7 1.7 0 0 0 1.2-2.9l-.4-.4a1.7 1.7 0 0 1 1.2-2.9h2.1A3.8 3.8 0 0 0 21 9.8C19.8 6.5 16.4 4.2 12 4.2Z" fill="currentColor" opacity=".22"/><path d="M12 4.2a7.8 7.8 0 0 0 0 15.6h1.1a1.7 1.7 0 0 0 1.2-2.9l-.4-.4a1.7 1.7 0 0 1 1.2-2.9h2.1A3.8 3.8 0 0 0 21 9.8C19.8 6.5 16.4 4.2 12 4.2Z"/><circle cx="7.5" cy="10" r=".7" fill="currentColor" stroke="none"/><circle cx="10" cy="7.5" r=".7" fill="currentColor" stroke="none"/><circle cx="14" cy="7.3" r=".7" fill="currentColor" stroke="none"/>' },
+        atom: { label: 'Science', body: '<ellipse cx="12" cy="12" rx="8.5" ry="3.7"/><ellipse cx="12" cy="12" rx="8.5" ry="3.7" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="8.5" ry="3.7" transform="rotate(120 12 12)"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/>' },
+        dna: { label: 'Biology', body: '<path d="M8 3.5c0 4.3 8 4.3 8 8.5s-8 4.2-8 8.5M16 3.5c0 4.3-8 4.3-8 8.5s8 4.2 8 8.5M9 7h6M9 17h6M8.5 12h7"/>' },
+        music: { label: 'Music', body: '<path d="M9 18V5l10-2v13M9 8l10-2"/><ellipse cx="6.5" cy="18" rx="3" ry="2.2" fill="currentColor" opacity=".3"/><ellipse cx="16.5" cy="16" rx="3" ry="2.2" fill="currentColor" opacity=".3"/>' },
+        landmark: { label: 'Civics', body: '<path d="m4 9 8-5 8 5M5 10h14M6 10v7M10 10v7M14 10v7M18 10v7M4 19h16"/><path d="m4 9 8-5 8 5Z" fill="currentColor" opacity=".24"/>' },
+        globe: { label: 'World', body: '<circle cx="12" cy="12" r="8.5"/><path d="M3.8 10h16.4M3.8 14h16.4M12 3.5c2.1 2.3 3.2 5.1 3.2 8.5s-1.1 6.2-3.2 8.5C9.9 18.2 8.8 15.4 8.8 12S9.9 5.8 12 3.5Z"/>' },
+        robot: { label: 'AI', body: '<rect x="5" y="7" width="14" height="12" rx="3" fill="currentColor" opacity=".2"/><rect x="5" y="7" width="14" height="12" rx="3"/><path d="M12 7V4M9 13h.01M15 13h.01M9 16h6M3 11v4M21 11v4"/>' },
+        flask: { label: 'Lab', body: '<path d="M9 3.5h6M10 3.5v6L5 18a2 2 0 0 0 1.7 3h10.6A2 2 0 0 0 19 18l-5-8.5v-6"/><path d="M7 16h10" fill="none" opacity=".6"/>' },
+        stethoscope: { label: 'Health', body: '<path d="M7 4v5a4 4 0 0 0 8 0V4M5 4h4M13 4h4M15 13v2a4 4 0 0 0 8 0v-1.5a1.5 1.5 0 1 0-3 0V15"/>' },
+        scale: { label: 'Law', body: '<path d="M12 4v15M7 19h10M5 7h14M7 7l-3 6h6L7 7ZM17 7l-3 6h6l-3-6Z"/><path d="M5 7h14" opacity=".45"/>' },
+        dumbbell: { label: 'Training', body: '<path d="M4 9v6M7 7v10M9 10h6M17 7v10M20 9v6"/><path d="M4 9h3M17 9h3M4 15h3M17 15h3" fill="currentColor" opacity=".32"/>' },
+        rocket: { label: 'Launch', body: '<path d="M14 4c2.8-1.4 5.4-.9 6 .1.9 1.6.4 4.2-.9 6.9L13 17l-6-6 5.9-6.1C12.9 4.5 13.5 4.2 14 4Z" fill="currentColor" opacity=".22"/><path d="M14 4c2.8-1.4 5.4-.9 6 .1.9 1.6.4 4.2-.9 6.9L13 17l-6-6 5.9-6.1C12.9 4.5 13.5 4.2 14 4ZM7 11l-3 1 4 4-1 3 3-1M13 8l3 3M7 19l-2 2M9 17l-2 2"/>' }
+      };
+
+      const ICON_ALIASES = {
+        '🏆': 'trophy', '💻': 'code', '📐': 'ruler', '🧠': 'brain', '🇬🇧': 'language', '📚': 'book', '✍️': 'pen', '🔬': 'microscope',
+        '📊': 'chartSubject', '🎨': 'palette', '⚛️': 'atom', '🧬': 'dna', '🎵': 'music', '🏛️': 'landmark', '🌍': 'globe', '🧮': 'calculator',
+        '⚡': 'bolt', '🤖': 'robot', '📈': 'chartSubject', '🧪': 'flask', '🩺': 'stethoscope', '⚖️': 'scale', '🏋️': 'dumbbell', '🚀': 'rocket',
+        house: 'home', 'bullseye': 'target', 'calendar-days': 'calendar', 'stopwatch': 'timer', 'list-check': 'list', 'chart-simple': 'chart', 'chart-line': 'chart', 'file-lines': 'file', 'gear': 'settings', 'floppy-disk': 'save', 'shield-halved': 'shield', 'thumbtack': 'pin', 'triangle-exclamation': 'warning', 'wand-magic-sparkles': 'magic', 'trash-can': 'trash'
+      };
+      const AVAILABLE_ICONS = ['trophy', 'code', 'calculator', 'language', 'book', 'pen', 'microscope', 'chartSubject', 'palette', 'atom', 'dna', 'music', 'landmark', 'globe', 'ruler', 'bolt', 'robot', 'flask', 'stethoscope', 'scale', 'dumbbell', 'rocket'];
+
+      function normalizeIconKey(value) {
+        const raw = String(value || '').trim();
+        return ICON_DEFS[raw] ? raw : (ICON_ALIASES[raw] || 'book');
+      }
+
+      function iconLabel(value) {
+        return (ICON_DEFS[normalizeIconKey(value)] || ICON_DEFS.book).label;
+      }
+
+      function iconSvg(value, className = 'sf-icon', extraAttrs = '') {
+        const key = normalizeIconKey(value);
+        const definition = ICON_DEFS[key] || ICON_DEFS.book;
+        return `<svg class="${className} sf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" ${extraAttrs}>${definition.body}</svg>`;
+      }
+
+      function hydrateFontAwesomeIcons(root = document) {
+        root.querySelectorAll('i.fa-pixel, [data-sf-icon]').forEach(element => {
+          const legacyClass = [...element.classList].find(name => name.startsWith('fa-') && !['fa-pixel', 'fa-regular', 'fa-solid', 'fa-brands'].includes(name));
+          const key = element.dataset.sfIcon || (legacyClass ? legacyClass.slice(3) : 'sparkles');
+          const classes = [...element.classList].filter(name => !name.startsWith('fa-') && name !== 'sf-icon').join(' ');
+          const label = element.getAttribute('aria-label') || ICON_DEFS[normalizeIconKey(key)]?.label || 'Icon';
+          element.outerHTML = iconSvg(key, classes, `aria-label="${escapeHtml(label)}"`);
+        });
+      }
+
+      const DEFAULT_SUBJECTS = [
+        { id: 'subj_cp', name: 'Competitive Programming', icon: 'trophy', color: '#22d3ee' },
+        { id: 'subj_code', name: 'Programming & CS', icon: 'code', color: '#10b981' },
+        { id: 'subj_math', name: 'Math & Calculus', icon: 'calculator', color: '#3b82f6' },
+        { id: 'subj_eng', name: 'English (IELTS)', icon: 'language', color: '#f59e0b' },
+        { id: 'subj_read', name: 'Technical reading', icon: 'book', color: '#8b5cf6' },
+        { id: 'subj_sci', name: 'Science & AI', icon: 'atom', color: '#ec4899' }
       ];
 
       const HEATMAP_PALETTES = {
@@ -16,20 +104,18 @@
         violet:  ['#0b111a', '#4c1d95', '#6d28d9', '#8b5cf6', '#c4b5fd']
       };
 
-      const DEFAULT_SUBJECTS = [
-        { id: 'subj_cp', name: 'Competitive Programming', icon: '🏆', color: '#22d3ee' },
-        { id: 'subj_code', name: 'Lập trình & CS', icon: '💻', color: '#10b981' },
-        { id: 'subj_math', name: 'Toán & Giải tích', icon: '📐', color: '#3b82f6' },
-        { id: 'subj_eng', name: 'Tiếng Anh (IELTS)', icon: '🇬🇧', color: '#f59e0b' },
-        { id: 'subj_read', name: 'Đọc sách Chuyên ngành', icon: '📚', color: '#8b5cf6' },
-        { id: 'subj_sci', name: 'Khoa học & AI', icon: '🧠', color: '#ec4899' }
-      ];
+      const RARITY_CONFIG = {
+        common: { label: 'Common', defaultWeight: 60, color: '#94a3b8' },
+        uncommon: { label: 'Uncommon', defaultWeight: 25, color: '#34d399' },
+        rare: { label: 'Rare', defaultWeight: 10, color: '#60a5fa' },
+        legendary: { label: 'Legendary', defaultWeight: 5, color: '#fbbf24' }
+      };
 
       const RPE_REWARDS = [
-        { id: 'reward_1', title: '🔥 JACKPOT NEURON', msg: 'Bạn đã hoàn thành một phiên học tập trung tốt!' },
-        { id: 'reward_2', title: '⚡ Siêu Tập Trung', msg: 'Một bước tiến nữa trên hành trình của bạn.' },
-        { id: 'reward_3', title: '🌱 Củng cố kiến thức', msg: 'Hãy nghỉ ngắn và ghi nhớ điều vừa học.' },
-        { id: 'reward_4', title: '💎 Kho báu Bền bỉ', msg: 'Kỷ luật hôm nay tạo nên tiến bộ dài hạn.' }
+        { id: 'reward_1', title: 'Deep reset', msg: 'Take a guilt-free 15-minute break.', rarity: 'common' },
+        { id: 'reward_2', title: 'Focus fuel', msg: 'Enjoy your favorite snack or drink.', rarity: 'uncommon' },
+        { id: 'reward_3', title: 'Golden pause', msg: 'Watch one episode or play for 20 minutes.', rarity: 'rare' },
+        { id: 'reward_4', title: 'Legendary off-screen hour', msg: 'You earned a full hour away from the desk.', rarity: 'legendary' }
       ];
 
       function toDateKey(dateObj) {
@@ -88,9 +174,14 @@
           thresholds: [35, 70, 100]
         },
         xp: 0,
-        schemaVersion: 4,
+        schemaVersion: 6,
         lootTickets: 0,
+        rewardProgressPomodoros: 0,
+        rewardConfig: { pomodorosPerTicket: 4, rarityWeights: { common: 60, uncommon: 25, rare: 10, legendary: 5 } },
         rpeRewards: RPE_REWARDS.map(reward => ({ ...reward })),
+        focusCombo: { count: 0, lastRewardedSessionId: '' },
+        streakFreezeShards: 0,
+        streakFreezeDates: [],
         zeigarnikHook: '',
         demoMode: false,
         protocol: { focus: 50, short: 10, long: 20, label: 'Deep Work 50/10' }
@@ -106,6 +197,7 @@
       let calendarOffsetMonths = 0;
       let stateRecoveryWarning = '';
       let storageWarningShown = false;
+      let rewardSpinInFlight = false;
 
       function isValidDateKey(value) {
         if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -164,7 +256,7 @@
         next.subjects = next.subjects.map(subject => ({
           ...subject,
           name: String(subject.name).trim().slice(0, 100),
-          icon: String(subject.icon || '📚').slice(0, 8),
+          icon: normalizeIconKey(subject.icon),
           color: /^#[0-9a-f]{6}$/i.test(String(subject.color || '')) ? subject.color : '#22d3ee'
         })).filter(subject => subject.name);
         if (!next.subjects.length) next.subjects = baseState.subjects;
@@ -174,6 +266,19 @@
         next.protocol = Object.assign({}, baseState.protocol, safeObject(source.protocol));
         ['focus', 'short', 'long'].forEach(key => { next.protocol[key] = Math.min(180, Math.max(1, Math.round(Number(next.protocol[key]) || 1))); });
         next.protocol.label = String(next.protocol.label || 'Pomodoro').slice(0, 80);
+        next.rewardConfig = Object.assign({}, baseState.rewardConfig, safeObject(source.rewardConfig));
+        next.rewardConfig.pomodorosPerTicket = Math.round(boundedNumber(next.rewardConfig.pomodorosPerTicket, 4, 1, 20));
+        next.rewardConfig.rarityWeights = Object.assign({}, baseState.rewardConfig.rarityWeights, safeObject(next.rewardConfig.rarityWeights));
+        Object.keys(RARITY_CONFIG).forEach(key => {
+          next.rewardConfig.rarityWeights[key] = Math.round(boundedNumber(next.rewardConfig.rarityWeights[key], RARITY_CONFIG[key].defaultWeight, 0, 1000));
+        });
+        next.rewardProgressPomodoros = Math.floor(boundedNumber(next.rewardProgressPomodoros, 0, 0, 1000000000));
+        next.focusCombo = Object.assign({}, baseState.focusCombo, safeObject(source.focusCombo));
+        next.focusCombo.count = Math.floor(boundedNumber(next.focusCombo.count, 0, 0, 100));
+        next.focusCombo.lastRewardedSessionId = safeId(next.focusCombo.lastRewardedSessionId, '');
+        next.streakFreezeShards = Math.floor(boundedNumber(next.streakFreezeShards, 0, 0, 1000000));
+        next.streakFreezeDates = Array.isArray(next.streakFreezeDates) ? [...new Set(next.streakFreezeDates.filter(isValidDateKey))] : [];
+        next.resourceAttachmentLimit = 3 * 1024 * 1024;
         next.heatmapConfig.layer = ['minutes', 'completion', 'sessions', 'focus'].includes(next.heatmapConfig.layer) ? next.heatmapConfig.layer : 'minutes';
         next.heatmapConfig.palette = Object.prototype.hasOwnProperty.call(HEATMAP_PALETTES, next.heatmapConfig.palette) ? next.heatmapConfig.palette : 'cyan';
         const seenSessionIds = new Set();
@@ -188,6 +293,7 @@
           seenSessionIds.add(session.id);
           session.subjectIds = [...new Set(session.subjectIds.filter(id => next.subjects.some(subject => subject.id === id)))];
           ['topic', 'goal', 'note', 'protocolLabel', 'blocker', 'nextStep', 'outputUnit'].forEach(key => { session[key] = String(session[key] || '').slice(0, 500); });
+          session.resourceId = typeof session.resourceId === 'string' ? session.resourceId : '';
           session.outputCount = boundedNumber(session.outputCount, 0, 0, 100000);
           session.timestamp = Number.isFinite(Number(session.timestamp)) ? Number(session.timestamp) : 0;
           return true;
@@ -204,6 +310,7 @@
           task.topic = String(task.topic || '').trim().slice(0, 200);
           task.goal = String(task.goal || '').slice(0, 500);
           task.subjectId = next.subjects.some(subject => subject.id === task.subjectId) ? task.subjectId : next.subjects[0].id;
+          task.resourceId = typeof task.resourceId === 'string' ? task.resourceId : '';
           task.rescheduled = Boolean(task.rescheduled);
           if (!task.topic) return false;
           return true;
@@ -216,11 +323,11 @@
         next.milestones = uniqueCollection(next.milestones, 'target', item => ({
           ...item, title: String(item.title || '').trim().slice(0, 200), subjectId: next.subjects.some(subject => subject.id === item.subjectId) ? item.subjectId : next.subjects[0].id,
           type: ['minutes', 'sessions', 'output'].includes(item.type) ? item.type : 'output', current: boundedNumber(item.current, 0, 0, 100000000),
-          target: boundedNumber(item.target, 1, 0.01, 100000000), unit: String(item.unit || 'đơn vị').slice(0, 40), deadline: isValidDateKey(item.deadline) ? item.deadline : ''
+          target: boundedNumber(item.target, 1, 0.01, 100000000), unit: String(item.unit || 'items').slice(0, 60), resourceId: typeof item.resourceId === 'string' ? item.resourceId : '', deadline: isValidDateKey(item.deadline) ? item.deadline : ''
         }), item => Boolean(item.title));
         next.resources = uniqueCollection(next.resources, 'resource', item => ({
           ...item, name: String(item.name || '').trim().slice(0, 200), subjectId: next.subjects.some(subject => subject.id === item.subjectId) ? item.subjectId : next.subjects[0].id,
-          type: String(item.type || 'Tài liệu').slice(0, 60), completed: boundedNumber(item.completed, 0, 0, 100000000), total: boundedNumber(item.total, 1, 1, 100000000), accuracy: boundedNumber(item.accuracy, 0, 0, 100)
+          type: String(item.type || 'Document').slice(0, 60), unit: String(item.unit || 'items').trim().slice(0, 60), completed: boundedNumber(item.completed, 0, 0, 100000000), total: boundedNumber(item.total, 1, 1, 100000000), accuracy: boundedNumber(item.accuracy, 0, 0, 100), fileName: String(item.fileName || '').slice(0, 180), fileType: String(item.fileType || '').slice(0, 100), fileSize: boundedNumber(item.fileSize, 0, 0, next.resourceAttachmentLimit), fileData: typeof item.fileData === 'string' && item.fileData.length <= next.resourceAttachmentLimit * 2 ? item.fileData : ''
         }), item => Boolean(item.name));
         next.weakAreas = uniqueCollection(next.weakAreas, 'weak', item => ({
           ...item, subtopic: String(item.subtopic || '').trim().slice(0, 200), subjectId: next.subjects.some(subject => subject.id === item.subjectId) ? item.subjectId : next.subjects[0].id,
@@ -237,11 +344,11 @@
           stageIndex: Math.round(boundedNumber(item.stageIndex, 0, 0, 4)), nextReviewDate: isValidDateKey(item.nextReviewDate) ? item.nextReviewDate : TODAY_KEY
         }), item => Boolean(item.topic));
         next.rpeRewards = Array.isArray(next.rpeRewards) ? next.rpeRewards.filter(reward => reward && typeof reward === 'object').map((reward, index) => ({
-          id: safeId(reward.id, `reward_${index}`), title: String(reward.title || '').slice(0, 80), msg: String(reward.msg || '').slice(0, 240)
+          id: safeId(reward.id, `reward_${index}`), title: String(reward.title || '').slice(0, 80), msg: String(reward.msg || '').slice(0, 240), rarity: Object.prototype.hasOwnProperty.call(RARITY_CONFIG, reward.rarity) ? reward.rarity : 'common', weight: boundedNumber(reward.weight, 0, 0, 1000)
         })) : RPE_REWARDS.map(reward => ({ ...reward }));
         next.lootTickets = Math.floor(boundedNumber(next.lootTickets, 0, 0, 1000000000));
         next.zeigarnikHook = String(next.zeigarnikHook || '').slice(0, 500);
-        next.schemaVersion = 4;
+        next.schemaVersion = 6;
         next.xp = next.sessions.reduce((sum, session) => sum + session.minutes, 0) / 60;
         return next;
       }
@@ -276,8 +383,8 @@
             Object.keys(sampleIds).forEach(key => { state[key] = (state[key] || []).filter(item => !sampleIds[key].has(item.id)); });
             state.demoMode = false;
             if (hadSampleData) {
-              if (state.zeigarnikHook === 'Cài đặt tiếp nhánh truy vết đường đi cho bài Shortest Path #2 trên Codeforces') state.zeigarnikHook = '';
-              if (state.onboarding && state.onboarding.examName === 'ICPC Regional & Học kỳ Thuật toán') {
+              if (state.zeigarnikHook === 'Continue the Shortest Path #2 branch on Codeforces') state.zeigarnikHook = '';
+              if (state.onboarding && state.onboarding.examName === 'ICPC Regional goal') {
                 state.onboarding.examName = '';
                 state.onboarding.examDate = '';
                 state.onboarding.blackoutDates = [];
@@ -292,10 +399,10 @@
           if (rawSnapshot) {
             try {
               localStorage.setItem(`${STORAGE_KEY}_recovery_${Date.now()}`, rawSnapshot);
-              stateRecoveryWarning = 'Dữ liệu cũ không đọc được. Tflow đã giữ bản gốc trong bộ nhớ trình duyệt và mở dữ liệu trống để tránh lỗi.';
+              stateRecoveryWarning = 'Older data could not be read. Tflow kept a recovery copy and opened a clean workspace.';
             } catch (backupError) {
               console.error('Tflow could not preserve the unreadable local data.', backupError);
-              stateRecoveryWarning = 'Dữ liệu cũ không đọc được và trình duyệt không thể tạo bản sao lưu tự động. Hãy tránh reset dữ liệu hoặc xóa bộ nhớ trình duyệt.';
+              stateRecoveryWarning = 'Older data could not be read and the browser could not create a recovery copy. Export a backup before resetting storage.';
             }
           }
           state = normalizeAppState({}, DEFAULT_STATE);
@@ -308,14 +415,14 @@
         try {
           refreshTodayKey();
           state.xp = getStudyHours();
-          state.schemaVersion = 4;
+          state.schemaVersion = 6;
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
           return true;
         } catch (e) {
           console.error('Tflow could not save local data.', e);
           if (!storageWarningShown && document.getElementById('toastContainer')) {
             storageWarningShown = true;
-            showToast('Không thể lưu dữ liệu trên thiết bị. Hãy xuất bản sao lưu và kiểm tra dung lượng trình duyệt.', '⚠️');
+            showToast('Could not save on this device. Export a backup and check browser storage.', '⚠️');
           }
           return false;
         }
@@ -327,7 +434,10 @@
       }
 
       function getStreak() {
-        const uniqueDates = new Set((state.sessions || []).map(session => session.date));
+        const uniqueDates = new Set([
+          ...(state.sessions || []).map(session => session.date),
+          ...(state.streakFreezeDates || [])
+        ]);
         let streak = 0;
         let checkDate = TODAY_KEY;
         if (!uniqueDates.has(checkDate)) checkDate = addDays(TODAY_KEY, -1);
@@ -336,6 +446,98 @@
           checkDate = addDays(checkDate, -1);
         }
         return streak;
+      }
+
+      function maybeProtectStreak() {
+        if (!state.streakFreezeShards || state.sessions.some(session => session.date === TODAY_KEY)) return false;
+        const yesterday = addDays(TODAY_KEY, -1);
+        const dayBefore = addDays(TODAY_KEY, -2);
+        const studiedBefore = state.sessions.some(session => session.date === dayBefore);
+        const alreadyFrozen = (state.streakFreezeDates || []).includes(yesterday);
+        if (!alreadyFrozen && !state.sessions.some(session => session.date === yesterday) && studiedBefore) {
+          state.streakFreezeShards -= 1;
+          state.streakFreezeDates.push(yesterday);
+          return true;
+        }
+        return false;
+      }
+
+      function getFocusComboStatus() {
+        const sessions = [...state.sessions].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        let count = 0;
+        for (let i = sessions.length - 1; i >= 0; i--) {
+          const session = sessions[i];
+          const uninterrupted = !session.blocker || session.blocker === 'No interruptions';
+          if (getValidFocusScore(session) >= 4 && uninterrupted) count++;
+          else break;
+        }
+        return count;
+      }
+
+      function maybeAwardFocusCombo(sessionId) {
+        const count = getFocusComboStatus();
+        state.focusCombo.count = count;
+        if (count >= 3 && count % 3 === 0 && state.focusCombo.lastRewardedSessionId !== sessionId) {
+          state.focusCombo.lastRewardedSessionId = sessionId;
+          state.lootTickets += 1;
+          state.streakFreezeShards += 1;
+          return true;
+        }
+        return false;
+      }
+
+      function getRewardProgressText() {
+        const needed = Math.max(1, Number(state.rewardConfig?.pomodorosPerTicket) || 4);
+        return `${state.rewardProgressPomodoros || 0}/${needed} focus sessions`;
+      }
+
+      function renderRewardSettings() {
+        const comboCount = getFocusComboStatus();
+        const comboCountEl = document.getElementById('cmdComboCount');
+        const comboTextEl = document.getElementById('cmdComboText');
+        const comboProgressEl = document.getElementById('cmdComboProgress');
+        const comboTitleEl = document.getElementById('cmdComboTitle');
+        const freezeTextEl = document.getElementById('cmdFreezeText');
+        if (comboCountEl) comboCountEl.textContent = `${Math.min(3, comboCount)} / 3`;
+        if (comboProgressEl) comboProgressEl.style.width = `${Math.min(100, comboCount / 3 * 100)}%`;
+        if (comboTitleEl) comboTitleEl.textContent = comboCount >= 3 ? 'Combo complete — keep the chain alive' : 'Build a 3-session flow';
+        if (comboTextEl) comboTextEl.textContent = comboCount >= 3 ? 'Your next qualifying session starts a new chain.' : `${3 - Math.min(3, comboCount)} high-focus session${3 - Math.min(3, comboCount) === 1 ? '' : 's'} to unlock a ticket and a freeze shard.`;
+        if (freezeTextEl) freezeTextEl.textContent = `${state.streakFreezeShards || 0} freeze shard${state.streakFreezeShards === 1 ? '' : 's'} ready`;
+
+        const input = document.getElementById('rewardSessionsPerTicket');
+        if (input) input.value = state.rewardConfig?.pomodorosPerTicket || 4;
+        const badge = document.getElementById('lootTicketsBadge');
+        if (badge) badge.textContent = `${state.lootTickets} tickets · ${getRewardProgressText()}`;
+        const shield = document.getElementById('streakFreezeBadge');
+        if (shield) shield.textContent = `${state.streakFreezeShards || 0} shields`;
+      }
+
+      function pickWeightedReward(rewards) {
+        const total = rewards.reduce((sum, reward) => sum + (Number(state.rewardConfig?.rarityWeights?.[reward.rarity]) || 0), 0);
+        if (total <= 0) return rewards[Math.floor(Math.random() * rewards.length)];
+        let cursor = Math.random() * total;
+        return rewards.find(reward => {
+          cursor -= Number(state.rewardConfig?.rarityWeights?.[reward.rarity]) || 0;
+          return cursor <= 0;
+        }) || rewards[rewards.length - 1];
+      }
+
+      function getPacePredictor() {
+        const examDate = state.onboarding.examDate;
+        if (!examDate) return { status: 'setup', title: 'Set an exam date to see your pace', text: 'Tflow will compare your recent study pace with the work left before the deadline.', pct: 0, meta: 'No deadline configured' };
+        const daysLeft = calendarDaysBetween(TODAY_KEY, examDate);
+        if (daysLeft < 0) return { status: 'past', title: 'Your deadline has passed', text: 'Move the exam date in Planning Setup to keep the predictor useful.', pct: 0, meta: `Deadline: ${examDate}` };
+        const recentStart = addDays(TODAY_KEY, -13);
+        const recentMinutes = state.sessions.filter(session => session.date >= recentStart && session.date <= TODAY_KEY).reduce((sum, session) => sum + getSessionMinutes(session), 0);
+        const actualPace = recentMinutes / 14;
+        const remainingMinutes = state.plannedTasks.filter(task => task.status === 'pending' && task.date <= examDate).reduce((sum, task) => sum + (Number(task.plannedMinutes) || 50), 0);
+        const requiredPace = remainingMinutes > 0 ? remainingMinutes / Math.max(1, daysLeft) : Number(state.heatmapConfig.dailyTargetMinutes) || 100;
+        const paceRatio = requiredPace > 0 ? actualPace / requiredPace : 1;
+        const deltaPct = Math.round((paceRatio - 1) * 100);
+        const dailyGap = Math.max(0, Math.ceil(requiredPace - actualPace));
+        if (remainingMinutes === 0) return { status: 'done', title: 'Plan cleared — keep the rhythm', text: 'There are no pending planned minutes before your deadline.', pct: 100, meta: `${daysLeft} days left · ${Math.round(actualPace)}m/day recent pace` };
+        if (deltaPct >= 0) return { status: 'ahead', title: `Ahead of pace by ${deltaPct}%`, text: `Your last 14 days average ${Math.round(actualPace)} minutes/day. Keep this cadence.`, pct: Math.min(100, Math.round(paceRatio * 100)), meta: `${daysLeft} days left · ${Math.round(requiredPace)}m/day needed` };
+        return { status: 'behind', title: `Add ${dailyGap} minutes/day to catch up`, text: `Your recent pace is ${Math.round(actualPace)} minutes/day. A small daily block closes the gap.`, pct: Math.max(8, Math.round(paceRatio * 100)), meta: `${daysLeft} days left · ${Math.round(requiredPace)}m/day needed` };
       }
 
       function updateGlobalChrome() {
@@ -350,6 +552,11 @@
         if (todayBadge) todayBadge.textContent = String(pendingToday);
         const srBadge = document.getElementById('navBadgeSr');
         if (srBadge) srBadge.textContent = String(dueCount);
+        renderRewardSettings();
+        const rewardBadge = document.getElementById('lootTicketsBadge');
+        if (rewardBadge) rewardBadge.textContent = `${state.lootTickets} tickets · ${getRewardProgressText()}`;
+        const freezeBadge = document.getElementById('streakFreezeBadge');
+        if (freezeBadge) freezeBadge.textContent = `${state.streakFreezeShards || 0} shields`;
       }
 
       function createId(prefix) {
@@ -385,14 +592,14 @@
           { name: 'International Grandmaster', min: 5500, next: 7000, color: '#ef4444' },
           { name: 'Legendary Grandmaster', min: 7000, next: 8500, color: '#ef4444' },
           { name: 'Mythical Grandmaster', min: 8500, next: 10000, color: '#ef4444' },
-          { name: 'Học Bá', min: 10000, next: Infinity, color: '#ef4444' }
+          { name: 'Scholar', min: 10000, next: Infinity, color: '#ef4444' }
         ];
       }
 
       function getRankNameHtml(name) {
         if (name === 'Legendary Grandmaster') return `<span style="color:#facc15">L</span>egendary Grandmaster`;
         if (name === 'Mythical Grandmaster') return `<span style="color:#facc15">Mythical</span> Grandmaster`;
-        if (name === 'Học Bá') return `<span style="color:#facc15">H</span>ọc <span style="color:#facc15">B</span>á`;
+        if (name === 'Scholar') return `<span style="color:#facc15">S</span>cholar`;
         return escapeHtml(name);
       }
 
@@ -409,11 +616,11 @@
         getStudyRanks().forEach(rank => {
           const isCurrent = rank.name === currentRank.name;
           const range = Number.isFinite(rank.next)
-            ? `${rank.min.toLocaleString('vi-VN')}–${rank.next.toLocaleString('vi-VN')} giờ`
-            : `${rank.min.toLocaleString('vi-VN')}+ giờ`;
+            ? `${rank.min.toLocaleString('en-US')}–${rank.next.toLocaleString('en-US')} h`
+            : `${rank.min.toLocaleString('en-US')}+ h`;
           const row = document.createElement('div');
           row.className = `flex items-center justify-between gap-3 rounded-lg px-3 py-2 border ${isCurrent ? 'border-[#22d3ee]/70 bg-[#0c2631]' : 'border-transparent bg-[#090d14]'}`;
-          row.innerHTML = `<span class="text-xs font-semibold truncate" style="color:${rank.color}">${getRankNameHtml(rank.name)}</span><span class="text-[10px] font-mono text-slate-400 whitespace-nowrap">${range}</span>${isCurrent ? '<span class="text-[9px] font-bold text-[#22d3ee] whitespace-nowrap">BẠN ĐANG Ở ĐÂY</span>' : ''}`;
+          row.innerHTML = `<span class="text-xs font-semibold truncate" style="color:${rank.color}">${getRankNameHtml(rank.name)}</span><span class="text-[10px] font-mono text-slate-400 whitespace-nowrap">${range}</span>${isCurrent ? '<span class="text-[9px] font-bold text-[#22d3ee] whitespace-nowrap">CURRENT</span>' : ''}`;
           list.appendChild(row);
         });
       }
@@ -427,13 +634,13 @@
           name.style.color = rank.color;
         }
         const currentHours = document.getElementById('rankingCurrentHours');
-        if (currentHours) currentHours.textContent = `${hours.toFixed(1)} giờ`;
+        if (currentHours) currentHours.textContent = `${hours.toFixed(1)}h`;
         const remaining = document.getElementById('rankingHoursToNext');
         if (remaining) {
           const nextRank = getStudyRanks().find(item => item.min === rank.next);
           remaining.textContent = Number.isFinite(rank.next)
-            ? `Còn ${Math.max(0, rank.next - hours).toFixed(1)} giờ · ${nextRank?.name || ''}`
-            : 'Đã đạt rank cao nhất';
+            ? `${Math.max(0, rank.next - hours).toFixed(1)}h to ${nextRank?.name || ''}`
+            : 'Top rank reached';
         }
         renderRankingList(hours, rank);
       }
@@ -443,24 +650,35 @@
       }
 
       function renderRpeRewardsEditor() {
+        const weightsList = document.getElementById('rarityWeightsList');
+        if (weightsList) {
+          weightsList.innerHTML = Object.entries(RARITY_CONFIG).map(([key, cfg]) => `
+            <label class="text-[10px] text-slate-400">${escapeHtml(cfg.label)}
+              <input data-rarity-weight="${key}" type="number" min="0" max="1000" value="${Number(state.rewardConfig?.rarityWeights?.[key]) || 0}" class="sf-input w-full mt-1 px-2 py-1.5 text-xs font-mono" />
+            </label>`).join('');
+        }
         const list = document.getElementById('rpeRewardsList');
         if (!list) return;
         list.innerHTML = '';
         (state.rpeRewards || []).forEach((reward, index) => {
+          const rarity = RARITY_CONFIG[reward.rarity] || RARITY_CONFIG.common;
           const row = document.createElement('div');
           row.className = 'space-y-2 pb-3 border-b border-[#182332] last:border-0';
           row.innerHTML = `
             <div class="flex items-center gap-2">
-              <input data-reward-title="${index}" value="${escapeHtml(reward.title || '')}" maxlength="80" placeholder="Tên phần thưởng" class="sf-input flex-1 px-2.5 py-1.5 text-xs" />
-              <button type="button" data-reward-remove="${index}" class="text-slate-500 hover:text-rose-400 px-2" title="Xóa phần thưởng">✕</button>
+              <input data-reward-title="${index}" value="${escapeHtml(reward.title || '')}" maxlength="80" placeholder="Reward name" class="sf-input flex-1 px-2.5 py-1.5 text-xs" />
+              <select data-reward-rarity="${index}" class="sf-input w-28 px-2 py-1.5 text-xs">${Object.entries(RARITY_CONFIG).map(([key, cfg]) => `<option value="${key}" ${reward.rarity === key ? 'selected' : ''}>${cfg.label}</option>`).join('')}</select>
+              <button type="button" data-reward-remove="${index}" class="text-slate-500 hover:text-rose-400 px-2" title="Remove reward"><i class="fa-pixel fa-regular fa-trash-can"></i></button>
             </div>
-            <textarea data-reward-msg="${index}" rows="2" maxlength="240" placeholder="Mô tả phần thưởng" class="sf-input w-full p-2 text-xs">${escapeHtml(reward.msg || '')}</textarea>`;
+            <div class="flex items-center gap-2"><span class="reward-rarity" style="color:${rarity.color}">${rarity.label}</span><span class="text-[10px] text-slate-500">Weight: ${Number(state.rewardConfig?.rarityWeights?.[reward.rarity]) || 0}</span></div>
+            <textarea data-reward-msg="${index}" rows="2" maxlength="240" placeholder="What does this reward unlock?" class="sf-input w-full p-2 text-xs">${escapeHtml(reward.msg || '')}</textarea>`;
           list.appendChild(row);
         });
         list.querySelectorAll('[data-reward-remove]').forEach(button => button.addEventListener('click', () => {
           state.rpeRewards.splice(Number(button.getAttribute('data-reward-remove')), 1);
           renderRpeRewardsEditor();
         }));
+        hydrateFontAwesomeIcons(list);
       }
 
       function showToast(message, icon = '✨') {
@@ -688,7 +906,7 @@
 
         document.getElementById('cycleCounterText').textContent = `Session #${cycleCount} / 4`;
         document.getElementById('startPauseIcon').textContent = isRunning ? '⏸' : '▶';
-        document.getElementById('startPauseText').textContent = isRunning ? 'Đang chạy đồng hồ tập trung...' : 'Nhấn nút ▶ để bắt đầu phiên tập trung';
+        document.getElementById('startPauseText').textContent = isRunning ? 'Focus timer is running...' : 'Press ▶ to start a focus session';
         document.getElementById('btnTodayMiniStart').textContent = isRunning ? '⏸ Pause' : '▶ Start';
       }
 
@@ -724,7 +942,7 @@
           persistTimerState();
         } else {
           if (timerMode === 'focus' && state.selectedSubjectIds.length === 0) {
-            showToast('Hãy chọn ít nhất 1 môn học!', '⚠️');
+            showToast('Choose at least one subject.', '⚠️');
             return;
           }
           isRunning = true;
@@ -752,7 +970,7 @@
         if (timerMode === 'focus') {
           openCompletePomodoroModal(Math.round(totalSeconds / 60));
         } else {
-          showToast('Đã hết giờ nghỉ! Quay lại trạng thái Focus.', '🚀');
+          showToast('Break complete. Back to focus.', '🚀');
           setTimerMode('focus');
         }
       }
@@ -767,7 +985,7 @@
           if (breakMode) setTimerMode(breakMode);
           else {
             setTimerMode('focus');
-            showToast('Đã kết thúc giờ nghỉ. Chưa tạo phiên học hoặc XP.', '🧘');
+            showToast('Break ended. No study session or XP was created.', '🧘');
           }
           return;
         }
@@ -776,7 +994,7 @@
           if (breakMode) setTimerMode(breakMode);
           else {
             setTimerMode('focus');
-            showToast('Phiên chưa có thời gian học nên chưa cộng XP.', 'ℹ️');
+            showToast('There was no study time to record.', 'ℹ️');
           }
           return;
         }
@@ -807,10 +1025,12 @@
           const btn = document.createElement('button');
           btn.type = 'button';
           const isSelected = ic === newSubjectPickedIcon;
-          btn.className = `w-8 h-8 rounded-lg flex items-center justify-center text-base transition border ${
-            isSelected ? 'bg-[#0c2631] border-[#22d3ee] scale-110' : 'bg-[#090d14] border-[#192534] hover:border-slate-600'
+          btn.className = `w-9 h-9 rounded-lg flex items-center justify-center transition border ${
+            isSelected ? 'bg-[#0c2631] border-[#22d3ee] text-[#22d3ee] scale-105' : 'bg-[#090d14] border-[#192534] text-slate-300 hover:border-slate-600 hover:text-white'
           }`;
-          btn.textContent = ic;
+          btn.title = iconLabel(ic);
+          btn.setAttribute('aria-label', `Use ${iconLabel(ic)} icon`);
+          btn.innerHTML = iconSvg(ic, 'w-5 h-5');
           btn.addEventListener('click', () => {
             newSubjectPickedIcon = ic;
             renderIconPicker();
@@ -832,7 +1052,7 @@
                 : 'bg-[#090d14] border-[#182332] opacity-75 hover:opacity-100'
             }`;
             card.innerHTML = `
-              <span class="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0" style="background-color:${subj.color}22; border:1px solid ${subj.color}66">${escapeHtml(subj.icon)}</span>
+              <span class="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0" style="background-color:${subj.color}22; border:1px solid ${subj.color}66">${iconSvg(subj.icon, 'w-4 h-4')}</span>
               <div class="min-w-0">
                 <div class="text-xs font-semibold text-white truncate">${escapeHtml(subj.name)}</div>
                 <div class="text-[10px] ${isSelected ? 'text-[#22d3ee]' : 'text-slate-500'}">${isSelected ? '✓ Selected' : 'Click to tag'}</div>
@@ -842,7 +1062,7 @@
               const idx = state.selectedSubjectIds.indexOf(subj.id);
               if (idx >= 0) {
                 if (state.selectedSubjectIds.length > 1) state.selectedSubjectIds.splice(idx, 1);
-                else showToast('Cần giữ ít nhất 1 môn học cho phiên Pomodoro!', '💡');
+                else showToast('Keep at least one subject selected for a focus session.', '💡');
               } else {
                 state.selectedSubjectIds.push(subj.id);
               }
@@ -861,14 +1081,14 @@
           state.selectedSubjectIds.forEach(id => {
             const s = state.subjects.find(x => x.id === id);
             if (!s) return;
-            names.push(`${s.icon} ${s.name}`);
+            names.push(`${iconLabel(s.icon)} ${s.name}`);
             const span = document.createElement('span');
-            span.className = 'px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#0c2631] text-[#22d3ee] border border-[#164e63]';
-            span.textContent = `${s.icon} ${s.name}`;
+            span.className = 'px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#0c2631] text-[#22d3ee] border border-[#164e63] inline-flex items-center gap-1';
+            span.innerHTML = `${iconSvg(s.icon, 'w-3.5 h-3.5')}<span>${escapeHtml(s.name)}</span>`;
             preview.appendChild(span);
           });
           const miniSubj = document.getElementById('todayMiniTimerSubj');
-          if (miniSubj) miniSubj.textContent = names.join(' + ') || '📚 Study Session';
+          if (miniSubj) miniSubj.textContent = names.join(' + ') || 'Study Session';
         }
 
         // Settings Subjects List
@@ -880,17 +1100,17 @@
             row.className = 'sf-inner p-3 flex items-center justify-between';
             row.innerHTML = `
               <div class="flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg flex items-center justify-center text-sm" style="background-color:${s.color}22; border:1px solid ${s.color}66">${escapeHtml(s.icon)}</span>
+                <span class="w-7 h-7 rounded-lg flex items-center justify-center text-sm" style="background-color:${s.color}22; border:1px solid ${s.color}66">${iconSvg(s.icon, 'w-4 h-4')}</span>
                 <span class="font-semibold text-white">${escapeHtml(s.name)}</span>
               </div>
-              <button type="button" data-del-subj="${s.id}" class="text-slate-500 hover:text-rose-400 text-xs">Xóa</button>
+              <button type="button" data-del-subj="${s.id}" class="text-slate-500 hover:text-rose-400 text-xs">Delete</button>
             `;
             setList.appendChild(row);
           });
           setList.querySelectorAll('button[data-del-subj]').forEach(btn => {
             btn.addEventListener('click', () => {
               if (state.subjects.length <= 1) {
-                showToast('Cần giữ lại ít nhất 1 môn học!', '⚠️');
+                showToast('Keep at least one subject.', '⚠️');
                 return;
               }
               const id = btn.getAttribute('data-del-subj');
@@ -907,11 +1127,11 @@
         const filterSel = document.getElementById('heatmapSubjectFilter');
         if (filterSel) {
           const prev = filterSel.value || 'all';
-          filterSel.innerHTML = `<option value="all">Tất cả môn học (${state.subjects.length})</option>`;
+          filterSel.innerHTML = `<option value="all">All subjects (${state.subjects.length})</option>`;
           state.subjects.forEach(s => {
             const opt = document.createElement('option');
             opt.value = s.id;
-            opt.textContent = `${s.icon} ${s.name}`;
+            opt.textContent = `${iconLabel(s.icon)} ${s.name}`;
             filterSel.appendChild(opt);
           });
           filterSel.value = prev;
@@ -925,10 +1145,21 @@
           state.subjects.forEach(s => {
             const opt = document.createElement('option');
             opt.value = s.id;
-            opt.textContent = `${s.icon} ${s.name}`;
+            opt.textContent = `${iconLabel(s.icon)} ${s.name}`;
             el.appendChild(opt);
           });
           if (prev && state.subjects.some(x => x.id === prev)) el.value = prev;
+        });
+        populateResourceSelects();
+      }
+
+      function populateResourceSelects() {
+        ['planResourceSelect', 'mpPlanResourceSelect', 'sessionResourceSelect', 'msResourceSelect', 'mpTargetResourceSelect'].forEach(id => {
+          const select = document.getElementById(id);
+          if (!select) return;
+          const previous = select.value;
+          select.innerHTML = '<option value="">No resource</option>' + state.resources.map(resource => `<option value="${escapeHtml(resource.id)}">${escapeHtml(resource.name)}</option>`).join('');
+          if (state.resources.some(resource => resource.id === previous)) select.value = previous;
         });
       }
 
@@ -943,8 +1174,10 @@
         setTimerMode('focus', task.plannedMinutes || 50);
         document.getElementById('activePlanLinkedBadge').classList.remove('hidden');
         renderSubjects();
+        const resourceSelect = document.getElementById('sessionResourceSelect');
+        if (resourceSelect) resourceSelect.value = task.resourceId || '';
         switchView('timer');
-        showToast(`Đã nạp "${task.topic}" (${task.plannedMinutes}m) vào Study Timer!`, '🎯');
+        showToast(`Loaded "${task.topic}" (${task.plannedMinutes}m) into the study timer.`, '🎯');
       }
 
       // ==================== 🔥 ADAPTIVE RECOVERY: SPREAD ACROSS ====================
@@ -956,7 +1189,7 @@
           tasksToSpread = todayPending.slice(1);
         }
         if (tasksToSpread.length === 0) {
-          showToast('Không có phiên học nào bị trễ cần phân bổ lại!', '✨');
+          showToast('There are no overdue sessions to spread.', '✨');
           return;
         }
 
@@ -984,7 +1217,7 @@
 
         saveState();
         refreshAllViews();
-        showToast(`🔥 Spread Across: Đã tự động phân bổ lại ${count} phiên học vào các ngày trống!`, '🔥');
+        showToast(`🔥 Spread Across moved ${count} sessions into open days.`, '🔥');
       }
 
       // ==================== VIEW 1: COMMAND CENTER RENDERER ====================
@@ -1016,10 +1249,10 @@
         // Topbar & KPI cards
         document.getElementById('headerStreakCount').textContent = String(streak);
         document.getElementById('headerXpCount').textContent = Number(state.xp || 0).toFixed(1);
-        document.getElementById('cmdKpiExamDays').textContent = diffDays === null ? '—' : examDiffDays < 0 ? 'Đã qua' : String(diffDays);
+        document.getElementById('cmdKpiExamDays').textContent = diffDays === null ? '—' : examDiffDays < 0 ? 'Passed' : String(diffDays);
         document.getElementById('cmdKpiExamSub').textContent = hasExamDate
-          ? examDiffDays < 0 ? `Đã qua ngày thi (${state.onboarding.examDate})` : (state.onboarding.examName || state.onboarding.examType || 'ngày còn lại')
-          : 'Chưa đặt ngày thi';
+          ? examDiffDays < 0 ? `Exam date passed (${state.onboarding.examDate})` : (state.onboarding.examName || state.onboarding.examType || 'days remaining')
+          : 'No exam date set';
         document.getElementById('cmdKpiReadiness').textContent = `${readinessPct}%`;
         document.getElementById('cmdKpiPhaseSub').textContent = `Phase: ${state.onboarding.phase.toUpperCase()}`;
         document.getElementById('cmdKpiStreak').textContent = String(streak);
@@ -1029,12 +1262,24 @@
         const rankName = document.getElementById('cmdRankName');
         if (rankName) { rankName.innerHTML = currentRank.nameHtml; rankName.style.color = currentRank.color; }
         const rankProgress = document.getElementById('cmdRankProgressText');
-        if (rankProgress) rankProgress.textContent = `${getStudyHours().toFixed(1)} giờ đã học${Number.isFinite(currentRank.next) ? ` · còn ${(currentRank.next - getStudyHours()).toFixed(1)} giờ` : ''}`;
+        if (rankProgress) rankProgress.textContent = `${getStudyHours().toFixed(1)} study hours logged${Number.isFinite(currentRank.next) ? ` · ${(currentRank.next - getStudyHours()).toFixed(1)}h remaining` : ''}`;
 
         // Timer bottom strip
         document.getElementById('timerStatPomodorosToday').textContent = String(todaySessions.length);
         document.getElementById('timerStatMinutesToday').textContent = `${todayMins}m`;
         document.getElementById('timerStatStreak').textContent = `${streak} days`;
+
+        const pace = getPacePredictor();
+        const paceTitle = document.getElementById('cmdPaceTitle');
+        const paceText = document.getElementById('cmdPaceText');
+        const paceMeta = document.getElementById('cmdPaceMeta');
+        const paceBar = document.getElementById('cmdPaceBar');
+        const paceCard = document.getElementById('cmdPacePredictor');
+        if (paceTitle) paceTitle.textContent = pace.title;
+        if (paceText) paceText.textContent = pace.text;
+        if (paceMeta) paceMeta.textContent = pace.meta;
+        if (paceBar) { paceBar.style.width = `${pace.pct}%`; paceBar.className = `h-full transition-all duration-700 ${pace.status === 'ahead' || pace.status === 'done' ? 'bg-emerald-400' : pace.status === 'behind' ? 'bg-amber-400' : 'bg-[#22d3ee]'}`; }
+        if (paceCard) paceCard.dataset.status = pace.status;
 
         // Adaptive Recovery Banner visibility
         const missedTasks = state.plannedTasks.filter(t => t.status === 'pending' && t.date < TODAY_KEY);
@@ -1042,7 +1287,7 @@
         if (missedTasks.length > 0) {
           banner.classList.remove('hidden');
           const mMins = missedTasks.reduce((a, b) => a + (Number(b.plannedMinutes) || 50), 0);
-          document.getElementById('cmdAdaptiveText').innerHTML = `Phát hiện <strong class="text-amber-400">${missedTasks.length} phiên học bị trễ (${mMins} phút)</strong> từ các ngày trước. Nhấn <strong>Spread Across</strong> để tự động rải đều vào các ngày trống!`;
+          document.getElementById('cmdAdaptiveText').innerHTML = `Found <strong class="text-amber-400">${missedTasks.length} overdue sessions (${mMins} minutes)</strong>. Use <strong>Spread Across</strong> to redistribute them.`;
         } else {
           banner.classList.add('hidden');
         }
@@ -1070,7 +1315,7 @@
                 ${task.status === 'completed' ? '✓' : ''}
               </button>
               <div class="min-w-0">
-                <div class="font-semibold text-white truncate ${task.status === 'completed' ? 'line-through text-slate-400' : ''}">${escapeHtml(subj.icon)} ${escapeHtml(task.topic)}</div>
+                <div class="font-semibold text-white truncate ${task.status === 'completed' ? 'line-through text-slate-400' : ''}">${iconSvg(subj.icon, 'w-3.5 h-3.5 inline-block align-[-2px]')} ${escapeHtml(task.topic)}</div>
                 <div class="text-[11px] text-slate-400 truncate">${escapeHtml(task.goal)} • <span class="text-[#22d3ee] font-mono">${task.plannedMinutes}m</span> ${isOverdue ? '<span class="text-amber-400">(Overdue)</span>' : ''}</div>
               </div>
             </div>
@@ -1145,7 +1390,7 @@
         if (!task) return;
         if (task.status === 'pending') {
           task.status = 'completed';
-          showToast(`Đã đánh dấu "${task.topic}" hoàn thành. Hãy ghi phiên học riêng để cộng thời gian và XP.`, '✅');
+          showToast(`Marked "${task.topic}" complete. Log a study session separately to add time and XP.`, '✅');
         } else {
           task.status = 'pending';
         }
@@ -1168,7 +1413,7 @@
         });
         saveState();
         refreshAllViews();
-        showToast(`Đã đẩy phiên khắc phục "${w.subtopic}" vào Today's Plan!`, '🛠️');
+        showToast(`Added a recovery block for "${w.subtopic}" to Today's Plan.`, '🛠️');
       }
 
       // ==================== VIEW 2: TODAY'S EXECUTION RENDERER ====================
@@ -1192,7 +1437,7 @@
         document.getElementById('todayExecTimeLogged').textContent = `${Math.floor(todayActualMins / 60)}h ${todayActualMins % 60}m`;
         document.getElementById('todayExecTimeTarget').textContent = plannedDayMins > 0
           ? `of ${Math.floor(plannedDayMins / 60)}h ${plannedDayMins % 60}m available`
-          : 'Không đặt thời gian học hôm nay';
+          : 'No study time planned today';
         document.getElementById('todayExecTimeBar').style.width = `${timePct}%`;
 
         // Tasks List
@@ -1203,7 +1448,7 @@
         else if (currentPlanFilter === 'done') filtered = filtered.filter(t => t.status === 'completed');
 
         if (filtered.length === 0) {
-          container.innerHTML = `<div class="p-8 text-center text-xs text-slate-500">Chưa có nhiệm vụ nào trong danh sách lọc này.</div>`;
+          container.innerHTML = `<div class="p-8 text-center text-xs text-slate-500">No tasks match this filter.</div>`;
           return;
         }
 
@@ -1226,7 +1471,7 @@
               <div class="space-y-1">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="font-bold text-white text-sm ${task.status === 'completed' ? 'line-through text-slate-400' : ''}">${escapeHtml(task.topic)}</span>
-                  <span class="px-2 py-0.5 rounded bg-[#14202e] text-slate-200 text-[11px]">${escapeHtml(subj.icon)} ${escapeHtml(subj.name)}</span>
+                  <span class="px-2 py-0.5 rounded bg-[#14202e] text-slate-200 text-[11px]">${iconSvg(subj.icon, 'w-3.5 h-3.5 inline-block align-[-2px]')} ${escapeHtml(subj.name)}</span>
                   <span class="font-mono text-[#22d3ee] font-semibold">${task.plannedMinutes}m</span>
                   <span class="font-mono text-[11px] ${isOverdue ? 'text-amber-400 font-bold' : isToday ? 'text-[#22d3ee]' : 'text-slate-400'}">
                     📅 ${task.date} ${isOverdue ? '(Overdue)' : isToday ? '(Today)' : ''}
@@ -1239,7 +1484,7 @@
             <div class="flex items-center gap-1.5 shrink-0">
               ${task.status === 'pending' ? `
                 <button type="button" data-plan-act="start" data-plan-id="${task.id}" class="sf-btn-primary px-3 py-1.5 text-xs">▶ Start</button>
-                <button type="button" data-plan-act="tomorrow" data-plan-id="${task.id}" class="sf-btn-secondary px-2.5 py-1.5 text-xs" title="Dời sang ngày mai">➔ +1d</button>
+                <button type="button" data-plan-act="tomorrow" data-plan-id="${task.id}" class="sf-btn-secondary px-2.5 py-1.5 text-xs" title="Move to tomorrow">➔ +1d</button>
               ` : `<span class="text-[#22d3ee] font-semibold px-2">Completed</span>`}
               <button type="button" data-plan-act="delete" data-plan-id="${task.id}" class="px-2 py-1 text-slate-500 hover:text-rose-400">✕</button>
             </div>
@@ -1262,7 +1507,7 @@
               task.rescheduled = true;
               saveState();
               refreshAllViews();
-              showToast(`Đã dời sang ngày ${nextD}!`, '📅');
+              showToast(`Moved to ${nextD}.`, '📅');
             } else if (act === 'delete') {
               state.plannedTasks = state.plannedTasks.filter(t => t.id !== id);
               saveState();
@@ -1302,7 +1547,7 @@
               const subj = state.subjects.find(s => s.id === t.subjectId) || state.subjects[0];
               return `
                 <div data-cal-task="${t.id}" class="sf-inner p-2 text-[11px] cursor-pointer hover:border-[#22d3ee]/50 transition ${t.status === 'completed' ? 'opacity-55 line-through' : ''}">
-                  <div class="font-semibold text-white truncate">${escapeHtml(subj.icon)} ${escapeHtml(t.topic)}</div>
+                  <div class="font-semibold text-white truncate">${iconSvg(subj.icon, 'w-3.5 h-3.5 inline-block align-[-2px]')} ${escapeHtml(t.topic)}</div>
                   <div class="text-[10px] text-slate-400 flex justify-between mt-0.5">
                     <span>${t.plannedMinutes}m</span>
                     <span class="text-[#22d3ee]">${t.status === 'completed' ? '✓' : '▶'}</span>
@@ -1381,9 +1626,9 @@
         const diffDays = examDiffDays === null ? null : Math.max(0, examDiffDays);
         const weekAvailMins = state.onboarding.availability.reduce((a, b) => a + (Number(b) || 0), 0);
 
-        document.getElementById('mpExamName').textContent = state.onboarding.examName || 'Chưa đặt mục tiêu';
-        document.getElementById('mpDaysLeft').textContent = !hasExamDate ? '—' : examDiffDays < 0 ? 'Đã qua' : String(diffDays);
-        document.getElementById('mpExamDateSub').textContent = !hasExamDate ? 'Chưa đặt ngày' : examDiffDays < 0 ? `Ngày thi đã qua: ${state.onboarding.examDate}` : `Hạn chót: ${state.onboarding.examDate}`;
+        document.getElementById('mpExamName').textContent = state.onboarding.examName || 'No goal set';
+        document.getElementById('mpDaysLeft').textContent = !hasExamDate ? '—' : examDiffDays < 0 ? 'Passed' : String(diffDays);
+        document.getElementById('mpExamDateSub').textContent = !hasExamDate ? 'No date set' : examDiffDays < 0 ? `Exam date passed: ${state.onboarding.examDate}` : `Deadline: ${state.onboarding.examDate}`;
         document.getElementById('mpPhaseTitle').textContent = (state.onboarding.phase || 'foundation').toUpperCase();
         document.getElementById('mpWeeklyCap').textContent = `${(weekAvailMins / 60).toFixed(1)}h`;
 
@@ -1398,7 +1643,7 @@
           card.className = 'sf-inner p-3.5 flex items-center justify-between';
           card.innerHTML = `
             <div class="flex items-center gap-2.5 min-w-0">
-              <span class="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0" style="background-color:${s.color}22; border:1px solid ${s.color}66">${escapeHtml(s.icon)}</span>
+              <span class="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0" style="background-color:${s.color}22; border:1px solid ${s.color}66">${iconSvg(s.icon, 'w-3.5 h-3.5 inline-block align-[-2px]')}</span>
               <div class="min-w-0">
                 <div class="text-xs font-bold text-white truncate">${escapeHtml(s.name)}</div>
                 <div class="text-[11px] text-slate-400 font-mono">${(totalMins / 60).toFixed(1)}h logged</div>
@@ -1415,20 +1660,20 @@
           const select = document.getElementById(id);
           if (!select) return;
           const previous = select.value;
-          select.innerHTML = state.subjects.map(subject => `<option value="${escapeHtml(subject.id)}">${escapeHtml(subject.icon)} ${escapeHtml(subject.name)}</option>`).join('');
+          select.innerHTML = state.subjects.map(subject => `<option value="${escapeHtml(subject.id)}">${escapeHtml(iconLabel(subject.icon))} ${escapeHtml(subject.name)}</option>`).join('');
           if (state.subjects.some(subject => subject.id === previous)) select.value = previous;
         });
 
         const plans = document.getElementById('mpPlansList');
         plans.innerHTML = '';
         if (state.plannedTasks.length === 0) {
-          plans.innerHTML = '<div class="py-4 text-center text-xs text-slate-500">Chưa có Plan. Thêm kế hoạch đầu tiên ở phía trên.</div>';
+          plans.innerHTML = '<div class="py-4 text-center text-xs text-slate-500">No plans yet. Add your first plan above.</div>';
         } else {
           [...state.plannedTasks].sort((a, b) => String(a.date || '').localeCompare(String(b.date || ''))).forEach(plan => {
             const subject = state.subjects.find(item => item.id === plan.subjectId);
             const row = document.createElement('div');
             row.className = 'sf-inner p-3 flex items-start justify-between gap-3 text-xs';
-            row.innerHTML = `<div class="min-w-0"><div class="font-semibold text-white">${escapeHtml(plan.topic)}</div><div class="mt-1 text-slate-400">${escapeHtml(plan.goal || '')}</div><div class="mt-1 font-mono text-[#22d3ee]">${escapeHtml(plan.date)} · ${Math.round((Number(plan.plannedMinutes) || 0) / 60 * 10) / 10} giờ · ${escapeHtml(subject ? `${subject.icon} ${subject.name}` : 'Chưa gắn môn')}</div></div><button type="button" data-mp-del-plan="${escapeHtml(plan.id)}" class="shrink-0 text-slate-500 hover:text-rose-400" title="Xóa Plan">✕</button>`;
+            row.innerHTML = `<div class="min-w-0"><div class="font-semibold text-white">${escapeHtml(plan.topic)}</div><div class="mt-1 text-slate-400">${escapeHtml(plan.goal || '')}</div><div class="mt-1 font-mono text-[#22d3ee]">${escapeHtml(plan.date)} · ${Math.round((Number(plan.plannedMinutes) || 0) / 60 * 10) / 10} hours · ${escapeHtml(subject ? `${iconLabel(subject.icon)} ${subject.name}` : 'No subject linked')}</div></div><button type="button" data-mp-del-plan="${escapeHtml(plan.id)}" class="shrink-0 text-slate-500 hover:text-rose-400" title="Delete Plan">✕</button>`;
             plans.appendChild(row);
           });
           plans.querySelectorAll('[data-mp-del-plan]').forEach(button => button.addEventListener('click', () => {
@@ -1441,7 +1686,7 @@
         const targets = document.getElementById('mpTargetsList');
         targets.innerHTML = '';
         if (state.milestones.length === 0) {
-          targets.innerHTML = '<div class="py-4 text-center text-xs text-slate-500">Chưa có Target. Tạo mục tiêu đầu tiên ở phía trên.</div>';
+          targets.innerHTML = '<div class="py-4 text-center text-xs text-slate-500">No targets yet. Add your first target above.</div>';
         } else {
           state.milestones.forEach(target => {
             const current = Number(target.current) || 0;
@@ -1449,7 +1694,7 @@
             const percent = Math.min(100, Math.round(current / goal * 100));
             const row = document.createElement('div');
             row.className = 'sf-inner p-3 space-y-2 text-xs';
-            row.innerHTML = `<div class="flex items-start justify-between gap-3"><div class="min-w-0"><div class="font-semibold text-white">${escapeHtml(target.title)}</div><div class="mt-1 text-slate-400">Hạn: ${escapeHtml(target.deadline || 'Chưa đặt')} · ${escapeHtml(target.unit || 'đơn vị')}</div></div><button type="button" data-mp-del-target="${escapeHtml(target.id)}" class="shrink-0 text-slate-500 hover:text-rose-400" title="Xóa Target">✕</button></div><div class="flex justify-between text-slate-300"><span>${current} / ${goal} ${escapeHtml(target.unit || '')}</span><span>${percent}%</span></div><div class="h-1.5 rounded-full bg-[#141f2d] overflow-hidden"><div class="h-full bg-[#22d3ee]" style="width:${percent}%"></div></div>`;
+            row.innerHTML = `<div class="flex items-start justify-between gap-3"><div class="min-w-0"><div class="font-semibold text-white">${escapeHtml(target.title)}</div><div class="mt-1 text-slate-400">Deadline: ${escapeHtml(target.deadline || 'Not set')} · ${escapeHtml(target.unit || 'units')}</div></div><button type="button" data-mp-del-target="${escapeHtml(target.id)}" class="shrink-0 text-slate-500 hover:text-rose-400" title="Delete Target">✕</button></div><div class="flex justify-between text-slate-300"><span>${current} / ${goal} ${escapeHtml(target.unit || '')}</span><span>${percent}%</span></div><div class="h-1.5 rounded-full bg-[#141f2d] overflow-hidden"><div class="h-full bg-[#22d3ee]" style="width:${percent}%"></div></div>`;
             targets.appendChild(row);
           });
           targets.querySelectorAll('[data-mp-del-target]').forEach(button => button.addEventListener('click', () => {
@@ -1579,7 +1824,7 @@
           if (dKey === selectedHeatmapDate) cell.style.boxShadow = '0 0 0 1.5px #f59e0b';
 
           const label = info.count > 0
-            ? `📅 ${dKey}: ${info.minutes}m (${completionPct}% target) • ${info.count} sessions • Focus: ${avgFocus === null ? 'chưa đánh giá' : `${avgFocus.toFixed(1)}★`}`
+            ? `📅 ${dKey}: ${info.minutes}m (${completionPct}% target) • ${info.count} sessions • Focus: ${avgFocus === null ? 'not rated' : `${avgFocus.toFixed(1)}★`}`
             : `📅 ${dKey}: 0m logged`;
 
           cell.addEventListener('mouseenter', () => {
@@ -1607,13 +1852,13 @@
         const list = document.getElementById('detailCardSessionsList');
         list.innerHTML = '';
         if (info.sessions.length === 0) {
-          list.innerHTML = `<div class="text-xs text-slate-500 col-span-2">Chưa có phiên học nào trong ngày này.</div>`;
+          list.innerHTML = `<div class="text-xs text-slate-500 col-span-2">No study sessions on this day.</div>`;
           return;
         }
         info.sessions.forEach(s => {
           const subjs = s.subjectIds.map(sid => {
             const st = state.subjects.find(x => x.id === sid);
-            return st ? `${st.icon} ${st.name}` : '';
+            return st ? `${iconLabel(st.icon)} ${st.name}` : '';
           }).filter(Boolean).join(' + ');
           const div = document.createElement('div');
           div.className = 'p-2.5 rounded-lg bg-[#0b1017] border border-[#151f2c] text-xs space-y-1';
@@ -1641,7 +1886,7 @@
             div.innerHTML = `
               <div class="flex items-start justify-between gap-2">
                 <div>
-                  <span class="px-2 py-0.5 rounded bg-[#14202e] text-slate-300 text-[10px]">${escapeHtml(subj.icon)} ${escapeHtml(subj.name)} • Due: ${escapeHtml(ms.deadline)}</span>
+                  <span class="px-2 py-0.5 rounded bg-[#14202e] text-slate-300 text-[10px]">${iconSvg(subj.icon, 'w-3.5 h-3.5 inline-block align-[-2px]')} ${escapeHtml(subj.name)} • ${ms.resourceId ? 'Linked resource' : 'No resource'} • Due: ${escapeHtml(ms.deadline || '—')}</span>
                   <div class="font-bold text-white mt-1">${escapeHtml(ms.title)}</div>
                 </div>
                 <div class="flex items-center gap-1">
@@ -1667,7 +1912,7 @@
               ms.current = Math.min(ms.target, ms.current + (ms.type === 'minutes' ? 25 : 1));
               saveState();
               refreshAllViews();
-              showToast(`Đã cập nhật cột mốc "${ms.title}"!`, '🏆');
+              showToast(`Updated milestone "${ms.title}".`, '🏆');
             });
           });
           msContainer.querySelectorAll('button[data-ms-del]').forEach(btn => {
@@ -1691,26 +1936,48 @@
             div.innerHTML = `
               <div class="flex items-start justify-between gap-2">
                 <div>
-                  <span class="px-2 py-0.5 rounded bg-[#14202e] text-[#22d3ee] font-semibold text-[10px]">${escapeHtml(res.type)} • ${escapeHtml(subj.icon)} ${escapeHtml(subj.name)}</span>
+                  <span class="px-2 py-0.5 rounded bg-[#14202e] text-[#22d3ee] font-semibold text-[10px]">${escapeHtml(res.type)} · ${escapeHtml(subj.name)}</span>
                   <div class="font-bold text-white mt-1">${escapeHtml(res.name)}</div>
+                  <div class="text-[11px] text-slate-500">${escapeHtml(res.unit || 'items')}${res.fileName ? ` · ${escapeHtml(res.fileName)}` : ''}</div>
                 </div>
                 <div class="flex items-center gap-1">
-                  <button type="button" data-res-study="${res.id}" class="sf-btn-primary px-2 py-1 text-[10px]">▶ Học</button>
+                  ${res.fileData ? `<a href="${res.fileData}" download="${escapeHtml(res.fileName || res.name)}" class="sf-btn-secondary px-2 py-1 text-[10px]">Open file</a>` : ''}
+                  <button type="button" data-res-study="${res.id}" class="sf-btn-primary px-2 py-1 text-[10px]">Study</button>
                   <button type="button" data-res-inc="${res.id}" class="sf-btn-secondary px-2 py-1 text-[10px]">+1</button>
-                  <button type="button" data-res-del="${res.id}" class="px-1 text-slate-500 hover:text-rose-400">✕</button>
+                  <button type="button" data-res-del="${res.id}" class="px-1 text-slate-500 hover:text-rose-400">×</button>
                 </div>
               </div>
-              <div class="flex justify-between text-[11px] text-slate-400">
-                <span>Completed: <strong class="text-white font-mono">${res.completed}/${res.total} (${pct}%)</strong></span>
-                <span>Accuracy: <strong class="text-[#22d3ee] font-mono">${res.accuracy}%</strong></span>
+              <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                <span>Progress: <strong class="text-white font-mono">${res.completed}/${res.total} ${escapeHtml(res.unit || 'items')} (${pct}%)</strong></span>
+                <label class="flex items-center gap-1">Completed
+                  <input data-res-progress="${res.id}" type="number" min="0" max="${res.total}" value="${res.completed}" class="sf-input w-20 px-1.5 py-1 text-[11px] font-mono" />
+                </label>
               </div>
               <div class="w-full h-1.5 bg-[#141f2d] rounded-full overflow-hidden">
-                <div class="h-full bg-[#22d3ee]" style="width:${pct}%"></div>
+                <div class="h-full bg-[#22d3ee] transition-[width] duration-500" style="width:${pct}%"></div>
               </div>
             `;
             resContainer.appendChild(div);
           });
 
+          resContainer.querySelectorAll('input[data-res-progress]').forEach(input => {
+            input.addEventListener('change', () => {
+              const resource = state.resources.find(item => item.id === input.getAttribute('data-res-progress'));
+              if (!resource) return;
+              resource.completed = Math.min(resource.total, Math.max(0, Math.round(Number(input.value) || 0)));
+              saveState();
+              refreshAllViews();
+            });
+          });
+          resContainer.querySelectorAll('input[data-res-progress]').forEach(input => {
+            input.addEventListener('change', () => {
+              const resource = state.resources.find(item => item.id === input.getAttribute('data-res-progress'));
+              if (!resource) return;
+              resource.completed = Math.min(resource.total, Math.max(0, Math.round(Number(input.value) || 0)));
+              saveState();
+              refreshAllViews();
+            });
+          });
           resContainer.querySelectorAll('button[data-res-inc]').forEach(btn => {
             btn.addEventListener('click', () => {
               const r = state.resources.find(x => x.id === btn.getAttribute('data-res-inc'));
@@ -1726,7 +1993,8 @@
               if (!r) return;
               state.selectedSubjectIds = [r.subjectId];
               document.getElementById('sessionTopicInput').value = r.name;
-              document.getElementById('sessionNoteInput').value = `Luyện tập trên ${r.name}`;
+              document.getElementById('sessionResourceSelect').value = r.id;
+              document.getElementById('sessionNoteInput').value = `Study ${r.name}`;
               renderSubjects();
               switchView('timer');
             });
@@ -1741,13 +2009,13 @@
         }
       }
 
-      function updateMilestonesProgress(subjectIds, minutesAdded, outputCountAdded) {
+      function updateMilestonesProgress(subjectIds, minutesAdded, outputCountAdded, resourceId = '') {
         const subjectShares = [...new Set(subjectIds)].filter(id => state.subjects.some(subject => subject.id === id));
         if (!subjectShares.length) return;
         const minutesPerSubject = (Number(minutesAdded) || 0) / subjectShares.length;
         const outputPerSubject = (Number(outputCountAdded) || 0) / subjectShares.length;
         state.milestones.forEach(ms => {
-          if (!subjectShares.includes(ms.subjectId) || ms.current >= ms.target) return;
+          if (!subjectShares.includes(ms.subjectId) || ms.current >= ms.target || (ms.resourceId && ms.resourceId !== resourceId)) return;
           if (ms.type === 'minutes') ms.current = Math.min(ms.target, ms.current + minutesPerSubject);
           else if (ms.type === 'sessions') ms.current = Math.min(ms.target, ms.current + 1);
           else if (ms.type === 'output') ms.current = Math.min(ms.target, ms.current + outputPerSubject);
@@ -1774,15 +2042,15 @@
             div.innerHTML = `
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded bg-[#14202e] text-white font-semibold text-[10px]">${escapeHtml(subj.icon)} ${escapeHtml(subj.name)}</span>
+                  <span class="px-2 py-0.5 rounded bg-[#14202e] text-white font-semibold text-[10px]">${iconSvg(subj.icon, 'w-3.5 h-3.5 inline-block align-[-2px]')} ${escapeHtml(subj.name)}</span>
                   <span class="text-[11px] font-mono ${isDue ? 'text-amber-400 font-bold' : 'text-[#22d3ee]'}">${isDue ? '🔔 Due Today' : `Next: ${item.nextReviewDate}`} (+${iv}d)</span>
                 </div>
                 <div class="font-bold text-white">${escapeHtml(item.topic)}</div>
                 <div class="text-slate-400">❓ ${escapeHtml(item.question || 'Active Recall')}</div>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
-                <button type="button" data-sr-act="good" data-sr-id="${item.id}" class="sf-btn-primary px-2.5 py-1 text-[11px]">✓ Nhớ rõ</button>
-                <button type="button" data-sr-act="fuzzy" data-sr-id="${item.id}" class="sf-btn-secondary px-2 py-1 text-[11px] text-amber-300">~ Mờ nhớ</button>
+                <button type="button" data-sr-act="good" data-sr-id="${item.id}" class="sf-btn-primary px-2.5 py-1 text-[11px]">✓ Remembered</button>
+                <button type="button" data-sr-act="fuzzy" data-sr-id="${item.id}" class="sf-btn-secondary px-2 py-1 text-[11px] text-amber-300">~ Fuzzy</button>
                 <button type="button" data-sr-act="reset" data-sr-id="${item.id}" class="sf-btn-secondary px-2 py-1 text-[11px]">↺</button>
               </div>
             `;
@@ -1796,11 +2064,11 @@
               if (btn.getAttribute('data-sr-act') === 'good') {
                 it.stageIndex = Math.min(it.stageIndex + 1, SR_INTERVALS.length - 1);
                 it.nextReviewDate = addDays(TODAY_KEY, SR_INTERVALS[it.stageIndex]);
-                showToast(`Đã chuyển sang mốc ôn tập +${SR_INTERVALS[it.stageIndex]} ngày!`, '🧠');
+                showToast(`Review interval advanced to +${SR_INTERVALS[it.stageIndex]} days.`, '🧠');
               } else if (btn.getAttribute('data-sr-act') === 'fuzzy') {
                 it.stageIndex = Math.max(0, it.stageIndex - 1);
                 it.nextReviewDate = addDays(TODAY_KEY, SR_INTERVALS[it.stageIndex]);
-                showToast(`Đã lùi lịch ôn về +${SR_INTERVALS[it.stageIndex]} ngày.`, '🟠');
+                showToast(`Review moved back to +${SR_INTERVALS[it.stageIndex]} days.`, '🟠');
               } else {
                 it.stageIndex = 0;
                 it.nextReviewDate = addDays(TODAY_KEY, 1);
@@ -1821,12 +2089,12 @@
             div.className = 'sf-inner p-3 flex items-center justify-between gap-2 text-xs';
             div.innerHTML = `
               <div>
-                <span class="text-[10px] text-rose-400 font-bold uppercase">${escapeHtml(subj.icon)} ${escapeHtml(subj.name)} • Mastery ${w.accuracy}%</span>
+                <span class="text-[10px] text-rose-400 font-bold uppercase">${iconSvg(subj.icon, 'w-3.5 h-3.5 inline-block align-[-2px]')} ${escapeHtml(subj.name)} • Mastery ${w.accuracy}%</span>
                 <div class="font-bold text-white mt-0.5">${escapeHtml(w.subtopic)}</div>
                 <div class="text-[11px] text-slate-400">🛠️ ${escapeHtml(w.action)}</div>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
-                <button type="button" data-weak-rem="${w.id}" class="sf-btn-secondary px-2.5 py-1 text-[11px] text-[#22d3ee]">🛠️ Khắc phục</button>
+                <button type="button" data-weak-rem="${w.id}" class="sf-btn-secondary px-2.5 py-1 text-[11px] text-[#22d3ee]">🛠️ Fix</button>
                 <button type="button" data-weak-del="${w.id}" class="text-slate-500 hover:text-emerald-400 px-1.5">✓</button>
               </div>
             `;
@@ -1840,7 +2108,7 @@
               state.weakAreas = state.weakAreas.filter(x => x.id !== btn.getAttribute('data-weak-del'));
               saveState();
               refreshAllViews();
-              showToast('Đã hoàn thành khắc phục điểm yếu!', '🎉');
+              showToast('Weak area marked as resolved.', '🎉');
             });
           });
         }
@@ -1882,10 +2150,16 @@
           });
         }
 
-        // RPE rewards are separate from study-hour XP and ranking.
-        document.getElementById('lootTicketsBadge').textContent = `${state.lootTickets} Tickets`;
+        const activeResourceSelects = ['planResourceSelect', 'mpPlanResourceSelect', 'sessionResourceSelect', 'msResourceSelect', 'mpTargetResourceSelect'];
+        activeResourceSelects.forEach(id => {
+          const select = document.getElementById(id);
+          if (!select) return;
+          const previous = select.value;
+          select.innerHTML = '<option value="">No resource</option>' + state.resources.map(resource => `<option value="${escapeHtml(resource.id)}">${escapeHtml(resource.name)}</option>`).join('');
+          if (state.resources.some(resource => resource.id === previous)) select.value = previous;
+        });
+        renderRewardSettings();
         renderRpeRewardsEditor();
-
       }
 
       // ==================== VIEW 8: STUDY SESSIONS TABLE ====================
@@ -1899,7 +2173,7 @@
           tr.className = 'hover:bg-[#0f1620] transition';
           const subjTags = sess.subjectIds.map(sid => {
             const s = state.subjects.find(x => x.id === sid);
-            return s ? `${s.icon} ${s.name}` : '';
+            return s ? `${iconLabel(s.icon)} ${s.name}` : '';
           }).filter(Boolean).join(', ');
           const focus = getValidFocusScore(sess);
           const stars = focus === null ? '—' : '★'.repeat(focus);
@@ -1907,7 +2181,7 @@
             <td class="py-2.5 px-3 font-mono text-slate-300">${escapeHtml(sess.date)}<div class="text-[10px] text-slate-500">${escapeHtml(sess.protocolLabel || 'Deep Work')}</div></td>
             <td class="py-2.5 px-3"><div class="text-white font-semibold">${escapeHtml(subjTags)}</div><div class="text-[#22d3ee] text-[11px]">${escapeHtml(sess.topic || '')}</div></td>
             <td class="py-2.5 px-3"><div class="text-slate-400 text-[11px]">🎯 ${escapeHtml(sess.goal || '—')}</div><div class="text-slate-200">✅ ${escapeHtml(sess.note || '')}</div></td>
-            <td class="py-2.5 px-3"><div class="text-amber-400 font-mono">${stars}</div><div class="text-[11px] text-slate-400">${escapeHtml(sess.blocker || 'Không')}</div></td>
+            <td class="py-2.5 px-3"><div class="text-amber-400 font-mono">${stars}</div><div class="text-[11px] text-slate-400">${escapeHtml(sess.blocker || 'None')}</div></td>
             <td class="py-2.5 px-3 text-slate-300">${escapeHtml(sess.nextStep || '—')}</td>
             <td class="py-2.5 px-3 text-right font-mono font-bold text-[#22d3ee]">${sess.minutes}m</td>
             <td class="py-2.5 px-3 text-right"><button type="button" data-del-sess="${sess.id}" class="text-slate-500 hover:text-rose-400">✕</button></td>
@@ -1960,11 +2234,11 @@
             d.innerHTML = `
               <span class="text-[11px] font-bold text-slate-400 mb-1.5">${lbl}</span>
               <input type="number" min="0" max="600" step="15" data-avail-idx="${idx}" value="${val}" class="sf-input w-full py-1 text-center font-mono text-xs text-[#22d3ee]" />
-              <span class="text-[10px] text-slate-500 mt-1">phút</span>
+              <span class="text-[10px] text-slate-500 mt-1">minutes</span>
             `;
             availGrid.appendChild(d);
           });
-          document.getElementById('weeklyCapacitySummary').textContent = `${sum} phút/tuần (${(sum / 60).toFixed(1)}h)`;
+          document.getElementById('weeklyCapacitySummary').textContent = `${sum} minutes/week (${(sum / 60).toFixed(1)}h)`;
           availGrid.querySelectorAll('input[data-avail-idx]').forEach(inp => {
             inp.addEventListener('change', () => {
               const i = Number(inp.getAttribute('data-avail-idx'));
@@ -1978,7 +2252,7 @@
 
       function autoGenerateWeeklyPlan() {
         let count = 0;
-        if (!state.subjects.length) { showToast('Hãy thêm ít nhất một môn học trước khi lập kế hoạch.', '⚠️'); return; }
+        if (!state.subjects.length) { showToast('Add at least one subject before auto-planning.', '⚠️'); return; }
         for (let d = 0; d < 7; d++) {
           const targetDate = addDays(TODAY_KEY, d);
           if (state.onboarding.blackoutDates.includes(targetDate)) continue;
@@ -2000,9 +2274,9 @@
                 .reduce((sum, task) => sum + (Number(task.plannedMinutes) || 50), 0)
             })).sort((a, b) => a.minutes - b.minutes);
             const subj = state.subjects.find(subject => subject.id === preferredSubjectId) || subjectLoad[0].subject;
-            const topic = dueReview?.topic || dueMilestone?.title || `Học ${subj.name}`;
-            const goal = dueReview ? `Ôn tập đến hạn: ${dueReview.question || dueReview.topic}`
-              : dueMilestone ? `Tiến độ mục tiêu: ${dueMilestone.title}` : `Tiến tới mục tiêu môn ${subj.name}`;
+            const topic = dueReview?.topic || dueMilestone?.title || `Study ${subj.name}`;
+            const goal = dueReview ? `Due review: ${dueReview.question || dueReview.topic}`
+              : dueMilestone ? `Target progress: ${dueMilestone.title}` : `Move toward the ${subj.name} target`;
             state.plannedTasks.push({
               id: createId('auto'),
               subjectId: subj.id,
@@ -2020,7 +2294,7 @@
         }
         saveState();
         refreshAllViews();
-        showToast(`Đã tự động lập ${count} phiên học mới cho tuần này!`, '✨');
+        showToast(`Auto-generated ${count} new study sessions!`, '✨');
       }
 
       // ==================== VIEW 10: ANALYTICS (PLANNED VS ACTUAL) ====================
@@ -2041,11 +2315,11 @@
         const compPct = rPlanned.length > 0 ? Math.round((completedPlans / rPlanned.length) * 100) : null;
 
         document.getElementById('statWeeklyCompletionRate').textContent = compPct === null ? '—' : `${compPct}%`;
-        document.getElementById('statPlannedVsActualMinutesSub').textContent = `${actualMins} / ${plannedMins} phút`;
+        document.getElementById('statPlannedVsActualMinutesSub').textContent = `${actualMins} / ${plannedMins} minutes`;
         document.getElementById('statScheduledVsCompleted').textContent = `${completedPlans} / ${rPlanned.length}`;
 
         const missedCount = state.plannedTasks.filter(t => t.status === 'pending' && t.date < TODAY_KEY).length;
-        document.getElementById('statMissedSessionsSub').textContent = `${missedCount} phiên trễ`;
+        document.getElementById('statMissedSessionsSub').textContent = `${missedCount} overdue sessions`;
 
         const avgFocus = getAverageFocus(rSessions);
         const avgF = avgFocus === null ? '—' : avgFocus.toFixed(2);
@@ -2054,14 +2328,14 @@
           return focus === null ? sum : sum + getSessionMinutes(session) * (focus / 5);
         }, 0);
         document.getElementById('statAvgFocusScore').textContent = avgFocus === null ? '—' : `${avgF} ★`;
-        document.getElementById('statEffectiveHoursSub').textContent = `Giờ thực chất: ${(effMins / 60).toFixed(1)}h`;
+        document.getElementById('statEffectiveHoursSub').textContent = `Effective hours: ${(effMins / 60).toFixed(1)}h`;
 
         const subjActual = Object.fromEntries(state.subjects.map(s => [s.id, 0]));
         const subjPlanned = Object.fromEntries(state.subjects.map(s => [s.id, 0]));
         const topicRows = new Map();
-        const keyFor = (sid, topic) => `${sid}|${(topic || 'Chủ đề chung').trim().toLocaleLowerCase()}`;
+        const keyFor = (sid, topic) => `${sid}|${(topic || 'General study').trim().toLocaleLowerCase()}`;
         const getTopicRow = (sid, topic) => {
-          const label = (topic || 'Chủ đề chung').trim() || 'Chủ đề chung';
+          const label = (topic || 'General study').trim() || 'General study';
           const key = keyFor(sid, label);
           if (!topicRows.has(key)) topicRows.set(key, { subjectId: sid, topic: label, planned: 0, actual: 0, focusSum: 0, focusCount: 0 });
           return topicRows.get(key);
@@ -2094,11 +2368,11 @@
         });
 
         if (underSubj && minDelta < -20) {
-          document.getElementById('statImbalanceAlert').textContent = `Thiếu: ${underSubj.icon} ${underSubj.name}`;
-          document.getElementById('statImbalanceSub').textContent = `${minDelta} phút so với kế hoạch`;
+          document.getElementById('statImbalanceAlert').textContent = `Behind: ${iconLabel(underSubj.icon)} ${underSubj.name}`;
+          document.getElementById('statImbalanceSub').textContent = `${minDelta} minutes vs plan`;
         } else {
-          document.getElementById('statImbalanceAlert').textContent = '✅ Cân đối';
-          document.getElementById('statImbalanceSub').textContent = 'Đúng tiến độ phân bổ';
+          document.getElementById('statImbalanceAlert').textContent = '✅ Balanced';
+          document.getElementById('statImbalanceSub').textContent = 'On pace';
         }
 
         const tbody = document.getElementById('subjectBalanceTableBody');
@@ -2111,7 +2385,7 @@
           const f = row.focusCount > 0 ? (row.focusSum / row.focusCount).toFixed(1) + '★' : '—';
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td class="py-2 px-2.5"><div class="font-bold text-white">${s ? `${escapeHtml(s.icon)} ${escapeHtml(s.name)}` : 'Môn đã xóa'}</div><div class="text-[10px] text-slate-500">${escapeHtml(row.topic)}</div></td>
+            <td class="py-2 px-2.5"><div class="font-bold text-white">${s ? `${iconSvg(s.icon, 'w-3.5 h-3.5 inline-block align-[-2px]')} ${escapeHtml(s.name)}` : 'Deleted subject'}</div><div class="text-[10px] text-slate-500">${escapeHtml(row.topic)}</div></td>
             <td class="py-2 px-2.5 text-right font-mono text-slate-400">${p}m</td>
             <td class="py-2 px-2.5 text-right font-mono font-bold text-white">${a}m</td>
             <td class="py-2 px-2.5 text-right font-mono font-bold ${d >= 0 ? 'text-[#22d3ee]' : 'text-amber-400'}">${d >= 0 ? `+${d}m` : `${d}m`}</td>
@@ -2127,7 +2401,7 @@
         pvaChart = new Chart(ctx1, {
           type: 'bar',
           data: {
-            labels: state.subjects.map(s => `${s.icon} ${s.name.slice(0, 12)}`),
+            labels: state.subjects.map(s => `${iconLabel(s.icon)} ${s.name.slice(0, 12)}`),
             datasets: [
               { label: 'Planned (m)', data: state.subjects.map(s => subjPlanned[s.id] || 0), backgroundColor: '#1e293b', borderRadius: 4 },
               { label: 'Actual (m)', data: state.subjects.map(s => subjActual[s.id] || 0), backgroundColor: '#22d3ee', borderRadius: 4 }
@@ -2183,7 +2457,7 @@
         subjPieChart = new Chart(ctx3, {
           type: 'doughnut',
           data: {
-            labels: state.subjects.map(s => `${s.icon} ${s.name}`),
+            labels: state.subjects.map(s => `${iconLabel(s.icon)} ${s.name}`),
             datasets: [{ data: state.subjects.map(s => subjActual[s.id] || 0), backgroundColor: state.subjects.map(s => s.color), borderColor: '#0b1017', borderWidth: 2 }]
           },
           options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#cbd5e1', font: { size: 10 } } } } }
@@ -2230,11 +2504,12 @@
             subjectIds: [...state.selectedSubjectIds], topic: document.getElementById('sessionTopicInput').value,
             goal: document.getElementById('sessionNoteInput').value,
             outputCount: document.getElementById('sessionTargetCountInput').value,
-            outputUnit: document.getElementById('sessionTargetUnitSelect').value
+            outputUnit: document.getElementById('sessionTargetUnitSelect').value,
+            resourceId: document.getElementById('sessionResourceSelect')?.value || ''
           }));
         } catch (error) { console.error('Tflow could not preserve a pending completed session.', error); }
         const modal = document.getElementById('modalCompletePomodoro');
-        document.getElementById('modalCompleteSubtext').textContent = `+${Math.round(mins)} phút học thực tế • +${(mins / 60).toFixed(2)} giờ XP & +1 vé thưởng`;
+        document.getElementById('modalCompleteSubtext').textContent = `+${Math.round(mins)} minutes of focused study • +${(mins / 60).toFixed(2)} XP hours & reward progress`;
         const list = document.getElementById('modalCompleteSubjectsList');
         list.innerHTML = '';
         state.selectedSubjectIds.forEach(sid => {
@@ -2242,16 +2517,16 @@
           if (!s) return;
           const sp = document.createElement('span');
           sp.className = 'px-2 py-0.5 rounded bg-[#0c2631] text-[#22d3ee] text-xs font-semibold';
-          sp.textContent = `${s.icon} ${s.name}`;
+          sp.textContent = `${iconLabel(s.icon)} ${s.name}`;
           list.appendChild(sp);
         });
-        const topic = document.getElementById('sessionTopicInput').value.trim() || 'Chủ đề chung';
+        const topic = document.getElementById('sessionTopicInput').value.trim() || 'General study';
         const goal = document.getElementById('sessionNoteInput').value.trim();
         document.getElementById('modalCompleteTopicLabel').textContent = topic;
-        document.getElementById('modalActiveRecallInput').value = goal ? `Hoàn thành: ${goal}` : '';
+        document.getElementById('modalActiveRecallInput').value = goal ? `Completed: ${goal}` : '';
         const plannedOutput = Number(document.getElementById('sessionTargetCountInput').value);
         document.getElementById('modalActualOutputCount').value = Number.isFinite(plannedOutput) && plannedOutput >= 0 ? plannedOutput : 0;
-        document.getElementById('modalActualOutputUnit').textContent = document.getElementById('sessionTargetUnitSelect').value || 'bài';
+        document.getElementById('modalActualOutputUnit').textContent = document.getElementById('sessionTargetUnitSelect').value || 'items';
         document.getElementById('modalFocusScoreSelect').value = '';
         document.getElementById('modalNextStepInput').value = '';
         modal.classList.remove('hidden');
@@ -2263,18 +2538,20 @@
         completionSaved = true;
         const previousState = JSON.parse(JSON.stringify(state));
         const linkedPlanId = activeLinkedPlanId;
-        const topic = document.getElementById('sessionTopicInput').value.trim() || 'Chủ đề học tập';
-        const goal = document.getElementById('sessionNoteInput').value.trim() || 'Hoàn thành phiên học';
+        const topic = document.getElementById('sessionTopicInput').value.trim() || 'Study topic';
+        const goal = document.getElementById('sessionNoteInput').value.trim() || 'Complete the study session';
         const note = document.getElementById('modalActiveRecallInput').value.trim() || goal;
         const outCount = boundedNumber(document.getElementById('modalActualOutputCount').value, 0, 0, 500);
-        const outUnit = document.getElementById('sessionTargetUnitSelect').value || 'bài';
+          const outUnit = document.getElementById('sessionTargetUnitSelect').value.trim() || 'items';
         const focusScoreValue = document.getElementById('modalFocusScoreSelect').value;
         const focusScore = focusScoreValue === '' ? null : Number(focusScoreValue);
-        const blocker = document.getElementById('modalBlockerSelect').value || 'Không gián đoạn';
+        const blocker = document.getElementById('modalBlockerSelect').value || 'No interruptions';
         const nextStep = document.getElementById('modalNextStepInput').value.trim();
+        const resourceId = document.getElementById('sessionResourceSelect')?.value || '';
+        const savedSessionId = createId('session');
 
         state.sessions.push({
-          id: createId('session'),
+          id: savedSessionId,
           planId: activeLinkedPlanId || null,
           date: TODAY_KEY,
           minutes: Math.round(pendingCompletedMinutes),
@@ -2288,26 +2565,39 @@
           focusScore,
           blocker,
           nextStep,
+          resourceId,
           timestamp: Date.now()
         });
-        state.lootTickets += 1;
+          const completedSession = state.sessions[state.sessions.length - 1];
+          state.rewardProgressPomodoros = (state.rewardProgressPomodoros || 0) + 1;
+          const rewardThreshold = Math.max(1, Number(state.rewardConfig?.pomodorosPerTicket) || 4);
+          if (state.rewardProgressPomodoros >= rewardThreshold) {
+            state.lootTickets += Math.floor(state.rewardProgressPomodoros / rewardThreshold);
+            state.rewardProgressPomodoros %= rewardThreshold;
+          }
+          const comboAwarded = maybeAwardFocusCombo(savedSessionId);
 
-        if (activeLinkedPlanId) {
+          if (resourceId) {
+            const resource = state.resources.find(item => item.id === resourceId);
+            if (resource) resource.completed = Math.min(resource.total, resource.completed + outCount);
+          }
+
+          if (activeLinkedPlanId) {
           const linked = state.plannedTasks.find(t => t.id === activeLinkedPlanId);
           if (linked) linked.status = 'completed';
           activeLinkedPlanId = null;
           document.getElementById('activePlanLinkedBadge').classList.add('hidden');
         }
 
-        updateMilestonesProgress(state.selectedSubjectIds, pendingCompletedMinutes, outCount);
+        updateMilestonesProgress(state.selectedSubjectIds, pendingCompletedMinutes, outCount, resourceId);
 
-        if (blocker === 'Bài khó / Kẹt ý tưởng' || (focusScore !== null && focusScore <= 2)) {
+        if (blocker === 'Hard problem / stuck' || (focusScore !== null && focusScore <= 2)) {
           state.weakAreas.unshift({
             id: createId('weak'),
             subtopic: topic,
             subjectId: state.selectedSubjectIds[0] || state.subjects[0].id,
             accuracy: focusScore === null ? 0 : focusScore * 15,
-            action: nextStep || `Ôn lại lý thuyết & giải lại bài tập ${topic}`,
+            action: nextStep || `Review the theory and retry practice for ${topic}`,
             status: 'active'
           });
         }
@@ -2320,7 +2610,7 @@
           state.spacedItems.unshift({
             id: createId('review'),
             topic: `${topic}: ${note}`,
-            question: `Trình bày lại cách giải / ý chính của "${topic}" không nhìn tài liệu.`,
+            question: `Explain the solution or key idea for "${topic}" without looking at the notes.`,
             subjectId: state.selectedSubjectIds[0] || state.subjects[0].id,
             createdDate: TODAY_KEY,
             stageIndex: 0,
@@ -2334,7 +2624,7 @@
           activeLinkedPlanId = linkedPlanId;
           completionSaved = false;
           document.getElementById('activePlanLinkedBadge').classList.toggle('hidden', !activeLinkedPlanId);
-          showToast('Không lưu được phiên học trên thiết bị. Phiên vẫn đang chờ; hãy kiểm tra dung lượng rồi bấm lưu lại.', '⚠️');
+          showToast('Could not save the study sessions on this device. They are still pending; check storage and save again.', '⚠️');
           return;
         }
         try { localStorage.removeItem(PENDING_COMPLETION_KEY); } catch (_) {}
@@ -2347,8 +2637,7 @@
         } else if (cycleCount >= 4) { cycleCount = 1; setTimerMode('long'); }
         else { cycleCount++; setTimerMode('short'); }
         refreshAllViews();
-        const shownMinutes = Number.isInteger(pendingCompletedMinutes) ? String(pendingCompletedMinutes) : pendingCompletedMinutes.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
-        showToast(`Đã lưu Session Intelligence (${shownMinutes}m${focusScore === null ? '' : ` • ${focusScore}★`})!`, '🎉');
+        showToast(`Session saved (${Math.round(pendingCompletedMinutes)}m${focusScore === null ? '' : ` · ${focusScore}★`})${comboAwarded ? ' · Combo reward unlocked!' : ''}`, comboAwarded ? '⚡' : '✓');
       }
 
       function restorePendingCompletion() {
@@ -2365,13 +2654,14 @@
           document.getElementById('sessionTopicInput').value = String(pending.topic || '').slice(0, 200);
           document.getElementById('sessionNoteInput').value = String(pending.goal || '').slice(0, 500);
           document.getElementById('sessionTargetCountInput').value = String(pending.outputCount || 1);
+          document.getElementById('sessionResourceSelect').value = pending.resourceId || '';
           if ([...document.getElementById('sessionTargetUnitSelect').options].some(option => option.value === pending.outputUnit)) {
             document.getElementById('sessionTargetUnitSelect').value = pending.outputUnit;
           }
           activeLinkedPlanId = state.plannedTasks.some(task => task.id === pending.linkedPlanId) ? pending.linkedPlanId : null;
           renderSubjects();
           openCompletePomodoroModal(minutes, pending.breakAfterCompletion);
-          showToast('Đã khôi phục phiên vừa hoàn tất. Lưu lại để nhận XP và vé thưởng.', '🔄');
+          showToast('Restored the completed session. Save it to keep XP and reward progress.', '🔄');
         } catch (error) {
           console.error('Tflow could not restore a pending completed session.', error);
           try { localStorage.removeItem(PENDING_COMPLETION_KEY); } catch (_) {}
@@ -2380,6 +2670,8 @@
 
       function refreshAllViews() {
         refreshTodayKey();
+        const streakProtected = maybeProtectStreak();
+        if (streakProtected) saveState();
         renderSubjects();
         updateGlobalChrome();
         // Render the visible view only. This keeps timer interactions and data entry
@@ -2400,6 +2692,7 @@
         };
         const renderer = renderers[activeView];
         if (renderer) renderer();
+        hydrateFontAwesomeIcons();
       }
 
       // ==================== WIRE ALL EVENTS ====================
@@ -2438,7 +2731,7 @@
         document.getElementById('btnCmdSaveZeigarnik').addEventListener('click', () => {
           state.zeigarnikHook = document.getElementById('cmdZeigarnikInput').value.trim();
           saveState();
-          showToast('Đã ghim bước tiếp theo (Zeigarnik Hook)!', '🪝');
+          showToast('Pinned the next step.', '🪝');
         });
 
         // Today Execution buttons
@@ -2451,17 +2744,18 @@
         });
         document.getElementById('btnSavePlannedTask').addEventListener('click', () => {
           const topic = document.getElementById('planTopicInput').value.trim();
-          if (!topic) { showToast('Hãy nhập chủ đề!', '⚠️'); return; }
+          if (!topic) { showToast('Enter a topic.', '⚠️'); return; }
           const dateValue = document.getElementById('planDateInput').value || TODAY_KEY;
-          if (!isValidDateKey(dateValue)) { showToast('Ngày học không hợp lệ.', '⚠️'); return; }
-          if (dateValue < TODAY_KEY) { showToast('Nhiệm vụ mới không thể đặt vào ngày đã qua. Dùng Ghi bù Phiên học nếu bạn muốn lưu việc đã học.', '⚠️'); return; }
+          if (!isValidDateKey(dateValue)) { showToast('Study date is invalid.', '⚠️'); return; }
+          if (dateValue < TODAY_KEY) { showToast('New tasks cannot be placed in the past. Use a past session log instead.', '⚠️'); return; }
           const minutesValue = Number(document.getElementById('planMinutesInput').value);
-          if (!Number.isFinite(minutesValue) || minutesValue < 15 || minutesValue > 1440) { showToast('Thời lượng phải từ 15 đến 1440 phút.', '⚠️'); return; }
+          if (!Number.isFinite(minutesValue) || minutesValue < 15 || minutesValue > 1440) { showToast('Duration must be between 15 and 1440 minutes.', '⚠️'); return; }
           state.plannedTasks.push({
             id: createId('plan'),
             subjectId: document.getElementById('planSubjSelect').value,
+            resourceId: document.getElementById('planResourceSelect').value || '',
             topic,
-            goal: document.getElementById('planGoalInput').value.trim() || 'Hoàn thành phiên học',
+            goal: document.getElementById('planGoalInput').value.trim() || 'Complete the study session',
             date: dateValue,
             plannedMinutes: Math.round(minutesValue),
             status: 'pending',
@@ -2472,7 +2766,7 @@
           document.getElementById('todayAddTaskDrawer').classList.add('hidden');
           saveState();
           refreshAllViews();
-          showToast('Đã thêm nhiệm vụ vào kế hoạch!', '📅');
+          showToast('Task added to the plan.', '📅');
         });
 
         document.getElementById('btnTodayOpenFullTimer').addEventListener('click', () => switchView('timer'));
@@ -2571,7 +2865,7 @@
           setTimerMode(timerMode);
           pomModal.classList.add('hidden');
           pomModal.classList.remove('flex');
-          showToast('Đã lưu cài đặt Pomodoro & Âm thanh!', '⚙️');
+          showToast('Timer and audio settings saved.', '⚙️');
         });
         document.getElementById('audioPresetSelect').addEventListener('change', (e) => startBrainwaveAudio(e.target.value));
         document.getElementById('audioVolumeSlider').addEventListener('input', () => {
@@ -2617,7 +2911,7 @@
         });
         document.getElementById('btnSaveMilestone').addEventListener('click', () => {
           const title = document.getElementById('msTitleInput').value.trim();
-          if (!title) { showToast('Hãy nhập tên cột mốc!', '⚠️'); return; }
+          if (!title) { showToast('Enter a milestone name.', '⚠️'); return; }
           state.milestones.unshift({
             id: createId('milestone'),
             title,
@@ -2625,14 +2919,15 @@
             type: document.getElementById('msTypeSelect').value,
             current: 0,
             target: Math.max(1, Number(document.getElementById('msTargetInput').value) || 15),
-            unit: document.getElementById('msUnitInput').value.trim() || 'bài',
-            deadline: document.getElementById('msDeadlineInput').value || state.onboarding.examDate
+            unit: document.getElementById('msUnitInput').value.trim() || 'items',
+            deadline: document.getElementById('msDeadlineInput').value || state.onboarding.examDate,
+            resourceId: document.getElementById('msResourceSelect')?.value || ''
           });
           document.getElementById('msTitleInput').value = '';
           document.getElementById('addMilestoneDrawer').classList.add('hidden');
           saveState();
           refreshAllViews();
-          showToast('Đã tạo cột mốc mới!', '🏆');
+          showToast('Milestone created.', '🏆');
         });
 
         document.getElementById('btnOpenAddResource').addEventListener('click', () => {
@@ -2644,19 +2939,43 @@
         document.getElementById('btnSaveResource').addEventListener('click', () => {
           const name = document.getElementById('resNameInput').value.trim();
           if (!name) return;
-          state.resources.unshift({
-            id: createId('resource'),
-            name,
-            type: document.getElementById('resTypeSelect').value,
-            subjectId: document.getElementById('resSubjSelect').value,
-            completed: 0,
-            total: Math.max(1, Number(document.getElementById('resTotalInput').value) || 100),
-            accuracy: boundedNumber(document.getElementById('resAccuracyInput').value, 80, 0, 100)
-          });
-          document.getElementById('resNameInput').value = '';
-          document.getElementById('addResourceDrawer').classList.add('hidden');
-          saveState();
-          refreshAllViews();
+          const file = document.getElementById('resFileInput').files?.[0];
+          if (file && file.size > 3 * 1024 * 1024) { showToast('Please choose a file smaller than 3 MB.', '⚠️'); return; }
+          const status = document.getElementById('resourceUploadStatus');
+          const finishResource = fileData => {
+            const total = Math.max(1, Number(document.getElementById('resTotalInput').value) || 100);
+            const completed = Math.min(total, Math.max(0, Number(document.getElementById('resCompletedInput').value) || 0));
+            state.resources.unshift({
+              id: createId('resource'),
+              name,
+              type: document.getElementById('resTypeInput').value.trim() || 'Document',
+              subjectId: document.getElementById('resSubjSelect').value,
+              unit: document.getElementById('resUnitInput').value.trim() || 'items',
+              completed,
+              total,
+              accuracy: 0,
+              fileName: file?.name || '',
+              fileType: file?.type || '',
+              fileSize: file?.size || 0,
+              fileData: fileData || ''
+            });
+            document.getElementById('resNameInput').value = '';
+            document.getElementById('resCompletedInput').value = '0';
+            document.getElementById('resFileInput').value = '';
+            if (status) status.textContent = 'Saved locally.';
+            document.getElementById('addResourceDrawer').classList.add('hidden');
+            saveState();
+            refreshAllViews();
+            showToast('Resource added to your library.', '✓');
+          };
+          if (file) {
+            const reader = new FileReader();
+            if (status) status.textContent = `Reading ${file.name} · 0%`;
+            reader.onprogress = event => { if (status && event.lengthComputable) status.textContent = `Reading ${file.name} · ${Math.round(event.loaded / event.total * 100)}%`; };
+            reader.onload = event => finishResource(String(event.target.result || ''));
+            reader.onerror = () => { if (status) status.textContent = 'Could not read that file.'; showToast('Could not read that file.', '⚠️'); };
+            reader.readAsDataURL(file);
+          } else finishResource('');
         });
 
         // Assessments, Spaced Rep, Weak Areas, Checkpoints, RPE
@@ -2699,7 +3018,7 @@
             subtopic,
             subjectId: document.getElementById('weakSubjSelect').value,
             accuracy: boundedNumber(document.getElementById('weakAccuracyInput').value, 45, 0, 100),
-            action: document.getElementById('weakActionInput').value.trim() || 'Ôn tập lại khái niệm',
+            action: document.getElementById('weakActionInput').value.trim() || 'Review the concept',
             status: 'active'
           });
           document.getElementById('weakSubtopicInput').value = '';
@@ -2732,29 +3051,34 @@
         });
 
         document.getElementById('btnSpinRpe').addEventListener('click', () => {
+          if (rewardSpinInFlight) return;
           const rewards = (state.rpeRewards || []).filter(reward => String(reward.title || '').trim());
           if (rewards.length === 0) {
-            showToast('Hãy thêm ít nhất một phần thưởng trong mục tùy chỉnh!', '⚠️');
+            showToast('Add at least one reward in the customization panel.', '⚠️');
             return;
           }
           if (state.lootTickets <= 0) {
-            showToast('Hoàn thành thêm 1 Pomodoro để nhận lượt mở thưởng!', '🎯');
+            showToast(`Complete ${Math.max(1, Number(state.rewardConfig?.pomodorosPerTicket) || 4)} focus sessions to earn a ticket.`, '🎯');
             return;
           }
+          const reward = pickWeightedReward(rewards);
+          rewardSpinInFlight = true;
+          const spinButton = document.getElementById('btnSpinRpe');
+          if (spinButton) { spinButton.disabled = true; spinButton.classList.add('opacity-60', 'cursor-wait'); }
+          const stage = document.getElementById('rpeStage');
+          const core = document.getElementById('rpeChestEmoji');
+          stage?.classList.remove('is-revealed');
+          stage?.classList.add('is-spinning');
+          setTimeout(() => {
+            stage?.classList.remove('is-spinning');
+            stage?.classList.add('is-revealed');
+            const result = document.getElementById('rpeResultText');
+            result.innerHTML = `<div><div class="font-bold" style="color:${RARITY_CONFIG[reward.rarity]?.color || '#fbbf24'}">${escapeHtml(reward.title)}</div><div class="reward-rarity mt-1" style="color:${RARITY_CONFIG[reward.rarity]?.color || '#fbbf24'}">${escapeHtml(RARITY_CONFIG[reward.rarity]?.label || 'Common')}</div><div class="text-[11px] text-slate-400 mt-1">${escapeHtml(reward.msg || '')}</div></div>`;
+            playCompletionBell();
+            rewardSpinInFlight = false;
+            if (spinButton) { spinButton.disabled = false; spinButton.classList.remove('opacity-60', 'cursor-wait'); }
+          }, 900);
           state.lootTickets--;
-          const reward = rewards[Math.floor(Math.random() * rewards.length)];
-          const result = document.getElementById('rpeResultText');
-          result.innerHTML = '';
-          const content = document.createElement('div');
-          const title = document.createElement('div');
-          title.className = 'font-bold text-amber-300';
-          title.textContent = reward.title;
-          const message = document.createElement('div');
-          message.className = 'text-[11px] text-slate-400';
-          message.textContent = reward.msg || '';
-          content.append(title, message);
-          result.appendChild(content);
-          playCompletionBell();
           saveState();
           refreshAllViews();
         });
@@ -2775,17 +3099,30 @@
             return {
               id: (state.rpeRewards[index] && state.rpeRewards[index].id) || createId('reward') + '_' + index,
               title: input.value.trim(),
-              msg: (document.querySelector(`[data-reward-msg="${index}"]`) || {}).value?.trim() || ''
+              msg: (document.querySelector(`[data-reward-msg="${index}"]`) || {}).value?.trim() || '',
+              rarity: document.querySelector(`[data-reward-rarity="${index}"]`)?.value || 'common',
+              weight: 0
             };
           }).filter(reward => reward.title);
           if (rewards.length === 0) {
-            showToast('Hãy giữ lại ít nhất một phần thưởng có tên!', '⚠️');
+            showToast('Keep at least one named reward.', '⚠️');
             return;
           }
+          Object.keys(RARITY_CONFIG).forEach(key => {
+            const input = document.querySelector(`[data-rarity-weight="${key}"]`);
+            state.rewardConfig.rarityWeights[key] = Math.round(boundedNumber(input?.value, RARITY_CONFIG[key].defaultWeight, 0, 1000));
+          });
           state.rpeRewards = rewards;
           saveState();
           refreshAllViews();
-          showToast('Đã lưu danh sách phần thưởng của bạn!', '🎁');
+          showToast('Reward pool saved.', '🎁');
+        });
+
+        document.getElementById('rewardSessionsPerTicket').addEventListener('change', event => {
+          state.rewardConfig.pomodorosPerTicket = Math.round(boundedNumber(event.target.value, 4, 1, 20));
+          saveState();
+          renderRewardSettings();
+          showToast('Reward cadence updated.', '✓');
         });
 
         // Onboarding Setup
@@ -2805,21 +3142,22 @@
             ? document.getElementById('onboardPhaseSelect').value : 'foundation';
           saveState();
           refreshAllViews();
-          showToast('Đã lưu cấu hình Planning Setup!', '✅');
+          showToast('Planning setup saved.', '✅');
         });
         document.getElementById('btnAutoGenerateWeekPlan').addEventListener('click', autoGenerateWeeklyPlan);
 
         document.getElementById('btnMpAddPlan').addEventListener('click', () => {
           const title = document.getElementById('mpPlanTitleInput').value.trim();
-          if (!title) { showToast('Hãy nhập tên cho Plan!', '⚠️'); return; }
+          if (!title) { showToast('Enter a plan name.', '⚠️'); return; }
           const planDate = document.getElementById('mpPlanDateInput').value || TODAY_KEY;
           const planMinutes = Number(document.getElementById('mpPlanMinutesInput').value);
-          if (!isValidDateKey(planDate)) { showToast('Ngày Plan không hợp lệ.', '⚠️'); return; }
-          if (planDate < TODAY_KEY) { showToast('Plan mới không thể đặt vào ngày đã qua. Hãy dùng Study Sessions để ghi lại phiên đã học.', '⚠️'); return; }
-          if (!Number.isFinite(planMinutes) || planMinutes < 5 || planMinutes > 1440) { showToast('Thời lượng Plan phải từ 5 đến 1440 phút.', '⚠️'); return; }
+          if (!isValidDateKey(planDate)) { showToast('Plan date is invalid.', '⚠️'); return; }
+          if (planDate < TODAY_KEY) { showToast('New plans cannot be placed in the past. Use Study Sessions to log completed work.', '⚠️'); return; }
+          if (!Number.isFinite(planMinutes) || planMinutes < 5 || planMinutes > 1440) { showToast('Plan duration must be between 5 and 1440 minutes.', '⚠️'); return; }
           state.plannedTasks.push({
             id: createId('plan'),
             subjectId: document.getElementById('mpPlanSubjectSelect').value || state.subjects[0]?.id || '',
+            resourceId: document.getElementById('mpPlanResourceSelect').value || '',
             topic: title,
             goal: document.getElementById('mpPlanGoalInput').value.trim() || title,
             date: planDate,
@@ -2831,13 +3169,14 @@
           document.getElementById('mpPlanGoalInput').value = '';
           saveState();
           refreshAllViews();
-          showToast('Đã thêm Plan vào Master Plan!', '🗓️');
+          showToast('Plan added to Master Plan.', '🗓️');
         });
         document.getElementById('btnMpAddTarget').addEventListener('click', () => {
           const title = document.getElementById('mpTargetTitleInput').value.trim();
           const target = Number(document.getElementById('mpTargetValueInput').value);
-          if (!title || !Number.isFinite(target) || target <= 0) { showToast('Nhập tên và giá trị Target lớn hơn 0!', '⚠️'); return; }
+          if (!title || !Number.isFinite(target) || target <= 0) { showToast('Enter a target name and a value above zero.', '⚠️'); return; }
           const type = document.getElementById('mpTargetTypeSelect').value;
+          const targetUnit = document.getElementById('mpTargetUnitInput').value.trim() || 'items';
           state.milestones.push({
             id: createId('target'),
             title,
@@ -2845,17 +3184,18 @@
             type,
             current: 0,
             target,
-            unit: document.getElementById('mpTargetUnitInput').value.trim() || (type === 'minutes' ? 'phút' : type === 'sessions' ? 'phiên' : 'bài'),
-            deadline: document.getElementById('mpTargetDeadlineInput').value || ''
+            unit: targetUnit,
+            deadline: document.getElementById('mpTargetDeadlineInput').value || '',
+            resourceId: document.getElementById('mpTargetResourceSelect')?.value || ''
           });
           document.getElementById('mpTargetTitleInput').value = '';
           document.getElementById('mpTargetDeadlineInput').value = '';
           saveState();
           refreshAllViews();
-          showToast('Đã thêm Target vào Master Plan!', '🎯');
+          showToast('Target added to Master Plan.', '🎯');
         });
-        document.getElementById('mpTargetTypeSelect').addEventListener('change', event => {
-          document.getElementById('mpTargetUnitInput').value = event.target.value === 'minutes' ? 'phút' : event.target.value === 'sessions' ? 'phiên' : 'bài';
+        document.getElementById('mpTargetTypeSelect').addEventListener('change', () => {
+          // The unit stays user-owned; changing the target type must not overwrite it.
         });
 
         // Analytics Range
@@ -2879,7 +3219,7 @@
         // Settings Create Subject
         document.getElementById('btnSaveNewSubject').addEventListener('click', () => {
             const name = document.getElementById('newSubjName').value.trim().slice(0, 100);
-          if (!name) { showToast('Hãy nhập tên môn học!', '⚠️'); return; }
+          if (!name) { showToast('Enter a subject name.', '⚠️'); return; }
           const color = document.getElementById('newSubjColor').value;
           const ns = { id: createId('subject'), name, icon: newSubjectPickedIcon, color };
           state.subjects.push(ns);
@@ -2887,7 +3227,7 @@
           document.getElementById('newSubjName').value = '';
           saveState();
           refreshAllViews();
-          showToast(`Đã tạo môn "${ns.icon} ${ns.name}"!`, '📚');
+          showToast(`Created subject "${iconLabel(ns.icon)} ${ns.name}".`, '✨');
         });
 
         // Complete Pomodoro Modal
@@ -2898,7 +3238,7 @@
             try { localStorage.removeItem(PENDING_COMPLETION_KEY); } catch (_) {}
             pendingBreakAfterCompletion = null;
             setTimerMode('focus');
-            showToast('Phiên chưa được lưu nên chưa cộng XP hoặc vé thưởng.', 'ℹ️');
+            showToast('The session was not saved, so no XP or reward progress was added.', 'ℹ️');
           }
         });
         document.getElementById('btnSaveCompletedPomodoro').addEventListener('click', saveCompletedPomodoro);
@@ -2914,7 +3254,7 @@
           state.subjects.forEach((s, i) => {
             const l = document.createElement('label');
             l.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#090d14] border border-[#192534] cursor-pointer text-xs';
-            l.innerHTML = `<input type="checkbox" value="${s.id}" ${i === 0 ? 'checked' : ''} class="manual-subj-chk" /><span>${escapeHtml(s.icon)} ${escapeHtml(s.name)}</span>`;
+            l.innerHTML = `<input type="checkbox" value="${s.id}" ${i === 0 ? 'checked' : ''} class="manual-subj-chk" /><span>${iconSvg(s.icon, 'w-3.5 h-3.5 inline-block align-[-2px]')} ${escapeHtml(s.name)}</span>`;
             box.appendChild(l);
           });
           manModal.classList.remove('hidden');
@@ -2931,29 +3271,29 @@
           const dVal = document.getElementById('manualDateInput').value || TODAY_KEY;
           const rawMinutes = Number(document.getElementById('manualMinutesInput').value);
           if (!Number.isFinite(rawMinutes) || rawMinutes < 5 || rawMinutes > 240) {
-            showToast('Thời lượng ghi bù phải từ 5 đến 240 phút.', '⚠️');
+            showToast('Past session duration must be between 5 and 240 minutes.', '⚠️');
             return;
           }
           if (dVal > TODAY_KEY) {
-            showToast('Ngày ghi bù không thể nằm trong tương lai.', '⚠️');
+            showToast('A past session cannot be in the future.', '⚠️');
             return;
           }
           if (!isValidDateKey(dVal)) {
-            showToast('Ngày ghi bù không hợp lệ.', '⚠️');
+            showToast('Past session date is invalid.', '⚠️');
             return;
           }
           const mVal = Math.round(rawMinutes);
-          const tVal = document.getElementById('manualTopicInput').value.trim() || 'Ôn tập chuyên đề';
+          const tVal = document.getElementById('manualTopicInput').value.trim() || 'Topic review';
           const focusValue = document.getElementById('manualFocusInput').value;
           const fValRaw = focusValue === '' ? null : Number(focusValue);
           if (fValRaw !== null && (!Number.isInteger(fValRaw) || fValRaw < 1 || fValRaw > 5)) {
-            showToast('Điểm tập trung phải từ 1 đến 5.', '⚠️');
+            showToast('Focus score must be between 1 and 5.', '⚠️');
             return;
           }
           const fVal = fValRaw;
           const nVal = document.getElementById('manualNoteInput').value.trim();
           const cIds = Array.from(document.querySelectorAll('.manual-subj-chk:checked')).map(x => x.value);
-          if (cIds.length === 0) { showToast('Hãy chọn ít nhất một môn học.', '⚠️'); return; }
+          if (cIds.length === 0) { showToast('Choose at least one subject.', '⚠️'); return; }
           const previousState = JSON.parse(JSON.stringify(state));
           state.sessions.push({
             id: createId('session'),
@@ -2962,24 +3302,24 @@
             subjectIds: cIds,
             topic: tVal,
             goal: nVal || tVal,
-            note: nVal || 'Ghi bù phiên học',
+            note: nVal || 'Past session log',
             outputCount: 1,
-            outputUnit: 'bài',
+            outputUnit: 'items',
             protocolLabel: 'Manual Log',
             focusScore: fVal,
-            blocker: 'Không gián đoạn',
+            blocker: 'No interruptions',
             nextStep: '',
             timestamp: Date.now()
           });
           updateMilestonesProgress(cIds, mVal, 1);
           if (!saveState()) {
             state = previousState;
-            showToast('Không lưu được phiên trên thiết bị. Hãy kiểm tra dung lượng rồi thử lại.', '⚠️');
+            showToast('Could not save the session on this device. Check storage and try again.', '⚠️');
             return;
           }
           closeMan();
           refreshAllViews();
-          showToast(`Đã ghi nhận ${mVal}m vào ngày ${dVal}!`, '✅');
+          showToast(`Logged ${mVal}m on ${dVal}.`, '✅');
         });
 
         // Breathing Modal
@@ -2988,7 +3328,7 @@
         document.getElementById('btnOpenBreathingModal').addEventListener('click', () => {
           brModal.classList.remove('hidden');
           brModal.classList.add('flex');
-          const steps = ['Hít vào sâu (4s)...', 'Giữ hơi (4s)...', 'Thở ra chậm (4s)...', 'Thả lỏng mắt (4s)...'];
+          const steps = ['Inhale deeply (4s)...', 'Hold (4s)...', 'Exhale slowly (4s)...', 'Relax your eyes (4s)...'];
           let idx = 0;
           document.getElementById('breathingGuideText').textContent = steps[0];
           if (brTimer) clearInterval(brTimer);
@@ -3025,13 +3365,13 @@
           a.click();
           a.remove();
           setTimeout(() => URL.revokeObjectURL(dataUrl), 1000);
-          showToast('Đã xuất file JSON thành công!', '💾');
+          showToast('JSON backup exported.', '💾');
         });
         document.getElementById('inputImportJson').addEventListener('change', (e) => {
           const file = e.target.files && e.target.files[0];
           if (!file) return;
           if (file.size > 10 * 1024 * 1024) {
-            showToast('File sao lưu quá lớn (giới hạn 10 MB).', '⚠️');
+            showToast('Backup file is too large (10 MB limit).', '⚠️');
             e.target.value = '';
             return;
           }
@@ -3044,7 +3384,7 @@
                 state = normalizeAppState(imp, DEFAULT_STATE);
                 if (!saveState()) {
                   state = previousState;
-                  showToast('Không thể lưu dữ liệu khôi phục. Dữ liệu hiện tại vẫn được giữ nguyên.', '⚠️');
+                  showToast('Could not save the restored data. Your current data is still intact.', '⚠️');
                   return;
                 }
                 try { localStorage.removeItem(PENDING_COMPLETION_KEY); } catch (_) {}
@@ -3057,10 +3397,10 @@
                 refreshAllViews();
                 bkModal.classList.add('hidden');
                 bkModal.classList.remove('flex');
-                showToast('Đã khôi phục dữ liệu thành công!', '🎉');
-              } else showToast('File này không phải bản sao lưu Tflow hợp lệ.', '⚠️');
+                showToast('Data restored successfully.', '🎉');
+              } else showToast('This is not a valid Tflow backup.', '⚠️');
             } catch (err) {
-              showToast('File JSON không hợp lệ!', '⚠️');
+              showToast('Invalid JSON file.', '⚠️');
             } finally {
               e.target.value = '';
             }
@@ -3068,7 +3408,7 @@
           reader.readAsText(file);
         });
         document.getElementById('btnClearAllData').addEventListener('click', () => {
-          if (!window.confirm('Xóa toàn bộ dữ liệu, môn học và cài đặt Tflow trên thiết bị này? Hãy xuất file sao lưu trước nếu cần giữ lại.')) return;
+          if (!window.confirm('Delete all Tflow data, subjects, and settings on this device? Export a backup first if you need to keep it.')) return;
           state = normalizeAppState({}, DEFAULT_STATE);
           try { localStorage.removeItem(TIMER_STORAGE_KEY); } catch (_) {}
           try { localStorage.removeItem(PENDING_COMPLETION_KEY); } catch (_) {}
@@ -3084,7 +3424,7 @@
           refreshAllViews();
           bkModal.classList.add('hidden');
           bkModal.classList.remove('flex');
-          showToast('Đã reset toàn bộ dữ liệu!', '🗑️');
+          showToast('All data reset.', '🗑️');
         });
 
         // Live Clock
@@ -3092,7 +3432,7 @@
           const now = new Date();
           const dateChanged = refreshTodayKey();
           document.getElementById('cmdLiveClock').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-          const dStr = now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+          const dStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
           document.getElementById('cmdLiveDate').textContent = dStr;
           document.getElementById('todayViewDateSub').textContent = dStr;
           if (dateChanged) refreshAllViews();
